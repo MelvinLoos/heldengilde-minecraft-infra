@@ -1,6 +1,21 @@
 ---
 # Installs only the binary and unit. The node config (/etc/pelican/config.yml) comes from the
 # Panel in 3-ansible; the unit refuses to start until it exists.
+- name: Pelican group with a fixed gid
+  ansible.builtin.group:
+    name: pelican
+    gid: "{{ host_pelican_gid }}"
+    system: true
+
+- name: Pelican user with a fixed uid
+  ansible.builtin.user:
+    name: pelican
+    uid: "{{ host_pelican_uid }}"
+    group: pelican
+    system: true
+    shell: /usr/sbin/nologin
+    create_home: false
+
 - name: Check for node config
   ansible.builtin.stat:
     path: /etc/pelican/config.yml

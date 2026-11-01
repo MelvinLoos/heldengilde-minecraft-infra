@@ -6,3 +6,6 @@ local/data/
 *.tfstate
 *.tfstate.*
 .terraform/
+3-ansible/inventory/secrets.yml
+3-ansible/inventory/production.yml
+*.decrypted.*

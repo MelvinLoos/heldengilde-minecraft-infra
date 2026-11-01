@@ -1,0 +1,53 @@
+# Managed by Ansible (pelican_panel).
+name: hg-panel
+services:
+  panel:
+    image: {{ hg_panel_image }}
+    restart: unless-stopped
+    env_file: panel.env
+    ports:
+      - "127.0.0.1:8081:80"
+    extra_hosts:
+      - "{{ hg_wings_domain }}:host-gateway"
+    volumes:
+      - panel-data:/pelican-data
+      - panel-logs:/var/www/html/storage/logs
+{% if hg_panel_db == 'mariadb' %}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: {{ hg_mariadb_image }}
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: {{ hg_panel_db_name }}
+      MARIADB_USER: {{ hg_panel_db_user }}
+      MARIADB_PASSWORD: "{{ hg_panel_db_password }}"
+      MARIADB_RANDOM_ROOT_PASSWORD: "1"
+    volumes:
+      - panel-db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      retries: 20
+{% endif %}
+
+  caddy:
+    image: {{ hg_caddy_image }}
+    restart: unless-stopped
+    # Host networking: Caddy reaches Panel (127.0.0.1:8081), Wings (127.0.0.1:8080) and BlueMap directly.
+    network_mode: host
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  panel-data:
+  panel-logs:
+  caddy-data:
+  caddy-config:
+{% if hg_panel_db == 'mariadb' %}
+  panel-db:
+{% endif %}

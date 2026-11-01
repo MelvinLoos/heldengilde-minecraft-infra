@@ -37,6 +37,10 @@ host_docker_daemon_config:
 # --- Pelican Wings ----------------------------------------------------------
 # Pinned release; sha256 from the release's per-asset digest.
 host_wings_install: true
+# Fixed ids for the host user that owns server volumes. Wings would otherwise pick any free id, and the
+# egg (UID/GID), the hg-gitops agent and migration bundles all assume the same value (ADR 0002, 0007).
+host_pelican_uid: 988
+host_pelican_gid: 988
 host_wings_version: v1.0.0-beta29
 host_wings_sha256:
   x86_64: 75d81ecf25366ed3c05ad6c6ccbad532ed896b8219aa9d2c93a5af003d69000b

@@ -1,0 +1,45 @@
+---
+# Full stack on one Ubuntu 24.04 host. Changing the inventory host is all it takes to move from
+# the laptop test target to the real server (ADR 0007).
+- name: Load secrets
+  hosts: minecraft_hosts
+  gather_facts: false
+  tags: [always]
+  tasks:
+    - name: Decrypt SOPS secrets on the controller
+      ansible.builtin.command: sops --decrypt {{ playbook_dir }}/inventory/secrets.sops.yml
+      delegate_to: localhost
+      become: false
+      register: hg_sops
+      changed_when: false
+      no_log: true
+      when: hg_secrets_source | default("none") == "sops"
+
+    - name: Load decrypted SOPS secrets
+      ansible.builtin.set_fact:
+        "{{ item.key }}": "{{ item.value }}"
+      loop: "{{ hg_sops.stdout | from_yaml | dict2items }}"
+      no_log: true
+      when: hg_secrets_source | default("none") == "sops"
+
+    - name: Load plain secrets file (laptop test only; gitignored)
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/inventory/secrets.yml"
+      no_log: true
+      when: hg_secrets_source | default("none") == "plain"
+
+- name: Host bootstrap
+  hosts: minecraft_hosts
+  roles:
+    - host_bootstrap
+  tags: [bootstrap]
+
+- name: Heldengilde stack
+  hosts: minecraft_hosts
+  roles:
+    - {role: hg_infra, tags: [infra]}
+    - {role: pelican_panel, tags: [panel]}
+    - {role: pelican_node, tags: [node]}
+    - {role: hg_server, tags: [server]}
+    - {role: hg_agent, tags: [agent]}
+    - {role: hg_backups, tags: [backups]}

@@ -17,6 +17,8 @@ check "shellcheck"                shellcheck "${shell_files[@]}"
 check "json files are valid"      jq empty "${json_files[@]}"
 check "no jars tracked by git"    test -z "$(git ls-files "*.jar")"
 check "egg.yaml is in sync"       bash -c 'diff <(4-server/build-egg.sh) 4-server/egg.yaml'
+check "ansible-lint"              ansible-lint 3-ansible 1-host-bootstrap
+check "ansible syntax"            bash -c 'cd 3-ansible && ANSIBLE_CONFIG=ansible.cfg ansible-playbook --syntax-check -i inventory/laptop-test.yml site.yml && cd ../1-host-bootstrap && ansible-playbook --syntax-check -i ../3-ansible/inventory/laptop-test.yml playbook.yml'
 check "jar lock is well formed"   jq -e '
   .jars | length > 0 and all(.[];
     (.name | test("^[A-Za-z0-9._-]+\\.jar$")) and

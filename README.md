@@ -1,6 +1,6 @@
 # heldengilde-minecraft-infra
 
-GitOps for the Heldengilde Minecraft server: OCI ARM64 host (OpenTofu), cloud-init, Ansible, Pelican Panel + Wings, and `itzg/minecraft-server` (Paper 26.2 now, 26.3 once CoreProtect supports it; Java 25).
+GitOps for the Heldengilde Minecraft server on any Ubuntu 24.04 host (`x86_64` or `arm64`: laptop test VM, spare PC at home, or a cloud VM): Ansible, Pelican Panel + Wings, and `itzg/minecraft-server` (Paper 26.2 now, 26.3 once CoreProtect supports it; Java 25). Oracle Cloud was dropped, see [ADR 0007](docs/adr/0007-provider-agnostic-ubuntu-hosts.md).
 
 Quest and NPC content lives in the separate `heldengilde-minecraft-content` repo.
 
@@ -8,19 +8,32 @@ Quest and NPC content lives in the separate `heldengilde-minecraft-content` repo
 
 | Path | Purpose |
 |---|---|
-| `1-terraform/` | OCI network and VM |
-| `2-cloud-init/` | First-boot install (Docker, Wings binary) |
-| `3-ansible/` | Panel, Wings config, API bootstrap |
+| `1-host-bootstrap/` | Ansible role for a fresh Ubuntu 24.04 host: hardening, ufw + `DOCKER-USER`, Docker, Wings, optional Cloudflare Tunnel / Playit.gg |
+| `3-ansible/` | `site.yml`: Panel + Caddy, Wings node, server, `hg-gitops` agent, backups. Inventory is the only thing that changes per host |
+| `scripts/` | Host-agnostic scripts shared by laptop and server: `panel-init`, `provision-server`, `backup-host`, `backup-panel`, `panel-state`, `migrate-state` |
 | `4-server/` | Server definition: plugins, jar lock, config, generated egg |
-| `agent/` | `hg-gitops` host agent (systemd timers) |
-| `local/` | Local Pelican + Wings test stack and spike tests |
+| `agent/` | `hg-gitops` host agent (systemd timers) and the jar fetcher |
+| `local/` | Laptop Pelican + Wings (+ MinIO) stack, spike tests, and `target/` (a systemd Ubuntu 24.04 container to test the Ansible roles) |
 | `.github/workflows/` | CI: lint, egg-in-sync check, secret scan, boot test |
 | `docs/adr/` | Architecture decisions (start with 0001) |
+| `docs/runbooks/` | Laptop-to-server migration, backups and restores |
+| `docs/implementation-plan.md` | Phases and their verification |
 | `docs/design/` | Original design docs, superseded in part by the ADRs |
 
 ## Status
 
-Phases 0 (scaffold), 1 (runtime spike), 2 (server definition) and 3 (CI) are done. Next: Milestone 2, Phase 4 (OpenTofu on OCI). See ADR 0002 and 0004.
+Phases 0-8 are done and verified locally (see [the plan](docs/implementation-plan.md)). Not yet exercised: a real server or home PC, arm64, the GitHub workflow (this repo has no remote), and a real DiscordSRV token.
+
+## Deploy to a host
+
+```bash
+cd 3-ansible
+cp inventory/production.yml.example inventory/production.yml   # edit; secrets via SOPS, see inventory/secrets.sops.yml.example
+ansible-galaxy collection install -r requirements.yml
+ansible-playbook -i inventory/production.yml site.yml
+```
+
+Test the same playbook on the laptop with `local/target/up.sh` and `-i inventory/laptop-test.yml`. Moving the world: [migration runbook](docs/runbooks/migrate-laptop-to-server.md).
 
 ## Local spike
 

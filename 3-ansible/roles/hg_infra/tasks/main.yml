@@ -1,0 +1,66 @@
+---
+- name: Create stack directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    mode: "{{ item.mode }}"
+  loop:
+    - {path: "{{ hg_root }}", mode: "0755"}
+    - {path: "{{ hg_root }}/gitops", mode: "0755"}
+    - {path: "{{ hg_root }}/custom-jars", mode: "0755"}
+    - {path: "{{ hg_root }}/premium", mode: "0700"}
+    - {path: "{{ hg_root }}/content", mode: "0755"}
+    - {path: "{{ hg_root }}/state", mode: "0700"}
+    - {path: "{{ hg_root }}/panel", mode: "0700"}
+    - {path: "{{ hg_root }}/backups", mode: "0700"}
+    - {path: "{{ hg_volumes_dir }}", mode: "0755"}
+
+- name: Install deploy keys
+  ansible.builtin.copy:
+    dest: "{{ hg_root }}/state/{{ item.name }}"
+    content: "{{ item.key }}\n"
+    mode: "0600"
+  loop:
+    - {name: deploy_infra, key: "{{ hg_infra_deploy_key | default('') }}"}
+    - {name: deploy_content, key: "{{ hg_content_deploy_key | default('') }}"}
+  when: item.key | length > 0
+  no_log: true
+
+- name: Check out the infra repo (read-only deploy key)
+  ansible.builtin.git:
+    repo: "{{ hg_infra_repo }}"
+    dest: "{{ hg_root }}/gitops"
+    version: "{{ hg_infra_branch }}"
+    force: true
+    key_file: "{{ hg_root }}/state/deploy_infra"
+    accept_newhostkey: true
+  when: hg_infra_source == "git"
+
+- name: Copy the infra repo from the controller (laptop tests)
+  ansible.posix.synchronize:
+    src: "{{ playbook_dir }}/../"
+    dest: "{{ hg_root }}/gitops/"
+    delete: true
+    rsync_opts:
+      - "--exclude=.git"
+      - "--exclude=*.jar"
+      - "--exclude=local/target"
+      - "--exclude=3-ansible/inventory/secrets.yml"
+      - "--exclude=3-ansible/inventory/production.yml"
+  when: hg_infra_source == "rsync"
+
+- name: Copy premium jars from the controller (never in Git)
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "{{ hg_root }}/premium/"
+    mode: "0600"
+  loop: "{{ hg_premium_jars | default([]) }}"
+
+- name: Fetch and verify custom jars
+  ansible.builtin.command: >-
+    {{ hg_root }}/gitops/agent/fetch-custom-jars.sh
+    {{ hg_root }}/gitops/4-server/custom-jars.lock.json {{ hg_root }}/custom-jars --allow-missing-premium
+  environment:
+    HG_PREMIUM_DIR: "{{ hg_root }}/premium"
+  register: hg_jars
+  changed_when: "'cached' not in hg_jars.stdout or 'ok ' not in hg_jars.stdout"

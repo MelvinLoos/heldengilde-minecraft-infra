@@ -1,0 +1,9 @@
+[Unit]
+Description=hg-gitops %i
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart={{ hg_root }}/gitops/agent/hg-gitops.sh %i
+Nice=10

@@ -1,0 +1,7 @@
+[Unit]
+Description=Back up Panel database and APP_KEY
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart={{ hg_root }}/gitops/scripts/backup-panel.sh

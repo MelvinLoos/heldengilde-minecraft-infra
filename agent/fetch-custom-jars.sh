@@ -15,6 +15,7 @@ status=0
 while IFS=$'\t' read -r name source sha; do
   target="$dest/$name"
   if [ -f "$target" ] && [ "$(sha256sum "$target" | cut -d' ' -f1)" = "$sha" ]; then
+    chmod 0644 "$target" # the container user (uid 988) must be able to read it
     echo "ok       $name (cached)"
     continue
   fi
@@ -43,6 +44,7 @@ while IFS=$'\t' read -r name source sha; do
     status=1
     continue
   fi
+  chmod 0644 "$target.part"
   mv "$target.part" "$target"
   echo "fetched  $name"
 done < <(jq -r '.jars[] | [.name, .source, .sha256] | @tsv' "$lock")

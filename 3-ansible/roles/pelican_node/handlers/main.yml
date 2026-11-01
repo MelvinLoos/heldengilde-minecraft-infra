@@ -1,0 +1,6 @@
+---
+- name: Restart wings
+  ansible.builtin.systemd:
+    name: wings
+    state: restarted
+    daemon_reload: true

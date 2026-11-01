@@ -1,0 +1,6 @@
+---
+- name: Restart panel stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ hg_root }}/panel"
+    files: [compose.yml]
+    state: restarted

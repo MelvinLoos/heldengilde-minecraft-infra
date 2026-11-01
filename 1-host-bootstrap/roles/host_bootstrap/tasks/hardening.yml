@@ -7,7 +7,7 @@
 
 - name: Install base packages
   ansible.builtin.apt:
-    name: [ca-certificates, curl, gnupg, ufw, unattended-upgrades, apt-listchanges, rsync, jq, zstd, acl, iptables]
+    name: [ca-certificates, curl, gnupg, git, ufw, unattended-upgrades, apt-listchanges, rsync, jq, zstd, acl, iptables]
     update_cache: true
     cache_valid_time: 3600
 

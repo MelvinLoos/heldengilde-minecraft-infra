@@ -1,0 +1,39 @@
+---
+- name: Register the S3 bucket as the panel backup host
+  ansible.builtin.command: "{{ hg_root }}/gitops/scripts/backup-host.sh"
+  environment:
+    COMPOSE_FILE: "{{ hg_root }}/panel/compose.yml"
+    S3_ENDPOINT: "{{ hg_s3_endpoint }}"
+    S3_REGION: "{{ hg_s3_region }}"
+    S3_BUCKET: "{{ hg_s3_bucket }}"
+    S3_KEY: "{{ hg_s3_key }}"
+    S3_SECRET: "{{ hg_s3_secret }}"
+    S3_PATH_STYLE: "{{ hg_s3_path_style | string | lower }}"
+    NODE_NAME: "{{ inventory_hostname }}"
+  no_log: true
+  changed_when: true
+  when: hg_backup_enabled
+
+- name: Panel state backup config
+  ansible.builtin.template:
+    src: backup.env.j2
+    dest: /etc/hg-gitops/backup.env
+    mode: "0600"
+  no_log: true
+
+- name: Panel state backup units
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: "0644"
+  loop:
+    - hg-backup-panel.service
+    - hg-backup-panel.timer
+  notify: Reload backup units
+
+- name: Enable the panel state backup timer
+  ansible.builtin.systemd:
+    name: hg-backup-panel.timer
+    enabled: true
+    state: started
+    daemon_reload: true

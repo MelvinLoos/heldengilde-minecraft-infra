@@ -19,8 +19,11 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - name: Install yamllint
-        run: pipx install yamllint==1.38.0
+      - name: Install linters
+        run: |
+          pipx install yamllint==1.38.0
+          pipx install --include-deps ansible-lint==26.4.0
+          ansible-galaxy collection install -r 3-ansible/requirements.yml
       - name: Repo checks
         run: local/lint.sh
 

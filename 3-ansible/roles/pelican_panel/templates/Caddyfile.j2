@@ -1,0 +1,29 @@
+# Managed by Ansible (pelican_panel).
+{
+{% if hg_tls_mode == 'external' %}
+	auto_https off
+{% else %}
+	email {{ hg_admin_email }}
+{% endif %}
+	admin off
+}
+
+{% set scheme = 'http://' if hg_tls_mode == 'external' else '' %}
+{{ scheme }}{{ hg_panel_domain }} {
+	reverse_proxy 127.0.0.1:8081
+}
+
+# The browser opens the console websocket straight to Wings, so Wings needs its own TLS hostname.
+{{ scheme }}{{ hg_wings_domain }} {
+	reverse_proxy 127.0.0.1:8080
+}
+{% if hg_bluemap_domain | length > 0 %}
+
+# BlueMap has no authentication of its own (finding C5).
+{{ scheme }}{{ hg_bluemap_domain }} {
+	basic_auth {
+		heldengilde {{ hg_bluemap_basicauth_hash }}
+	}
+	reverse_proxy 127.0.0.1:{{ hg_bluemap_port }}
+}
+{% endif %}

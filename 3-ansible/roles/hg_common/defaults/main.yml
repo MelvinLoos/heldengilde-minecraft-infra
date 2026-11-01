@@ -1,0 +1,54 @@
+---
+# Non-secret defaults shared by every hg_* role (role defaults so that inventory vars can override them).
+# Secrets live in inventory/secrets.sops.yml (see the .example).
+hg_secrets_source: none          # sops | plain | none
+hg_root: /srv/heldengilde
+hg_volumes_dir: /var/lib/pelican/volumes
+
+# Where the infra repo comes from: `git` (deploy key, production) or `rsync` (copy from this checkout; laptop tests).
+hg_infra_source: git
+hg_infra_repo: git@github.com:heldengilde/heldengilde-minecraft-infra.git
+hg_infra_branch: main
+hg_content_repo: git@github.com:heldengilde/heldengilde-minecraft-content.git
+hg_content_branch: main
+
+# Panel
+hg_panel_image: ghcr.io/pelican/panel:v1.0.0-beta38
+hg_panel_db: sqlite              # sqlite | mariadb
+hg_panel_domain: panel.example.org
+hg_wings_domain: wings.example.org
+hg_bluemap_domain: ""            # set to publish BlueMap behind Caddy basic auth
+hg_bluemap_port: 8100
+hg_tls_mode: acme                # acme: Caddy gets Let's Encrypt certs | external: a tunnel/proxy terminates TLS, Caddy serves plain HTTP
+hg_admin_email: admin@example.org
+hg_caddy_image: caddy:2.10.0-alpine
+hg_mariadb_image: mariadb:11.4
+
+# Server
+hg_server_name: hg-paper
+hg_server_port: 25565
+hg_server_memory_mb: 20480
+hg_server_disk_mb: 40960
+
+# Backups (S3-compatible)
+hg_backup_enabled: false
+hg_s3_endpoint: ""
+hg_s3_region: auto
+hg_s3_bucket: heldengilde-backups
+hg_s3_path_style: true
+hg_db_dump_retention_days: 14
+
+# Agent timers (systemd OnCalendar / OnUnitActiveSec)
+hg_agent_sync_interval: 5min
+hg_agent_snapshot_calendar: "*-*-* 04:00:00"
+
+# Node connection: acme -> Caddy serves https on 443; external -> a tunnel terminates TLS in front of Caddy.
+hg_node_scheme: https
+hg_node_connect_port: 443
+hg_panel_db_name: panel
+hg_panel_db_user: panel
+
+# Set false to stop after the panel/node (used before importing a migration bundle, see docs/runbooks).
+hg_provision_server: true
+hg_server_extra_env:
+  CFG_DISCORD_BOT_TOKEN: "{{ hg_discord_bot_token | default('unset', true) }}"  # egg requires a value; DiscordSRV stays disconnected until a real token is set

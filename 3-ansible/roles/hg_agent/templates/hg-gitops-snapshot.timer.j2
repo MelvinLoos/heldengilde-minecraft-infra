@@ -1,0 +1,10 @@
+[Unit]
+Description=hg-gitops: snapshot server-owned content to autosync/server
+
+[Timer]
+OnCalendar={{ hg_agent_snapshot_calendar }}
+Persistent=true
+Unit=hg-gitops@snapshot-server-content.service
+
+[Install]
+WantedBy=timers.target

@@ -18,9 +18,10 @@
     - {direction: outgoing, default: allow}
     - {direction: routed, default: deny}
 
+# Plain allow, not `limit`: ufw's rate limit (6 connections per 30 s) locks out Ansible itself; fail2ban handles brute force.
 - name: UFW allow SSH
   community.general.ufw:
-    rule: limit
+    rule: allow
     port: "{{ host_ssh_port }}"
     proto: tcp
     from_ip: "{{ item }}"

@@ -1,0 +1,10 @@
+[Unit]
+Description=hg-gitops: pull infra and content
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec={{ hg_agent_sync_interval }}
+Unit=hg-gitops@sync.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,21 @@
+---
+# Copy to production.yml (gitignored). Only this file changes between laptop and server.
+all:
+  children:
+    minecraft_hosts:
+      hosts:
+        mc1:
+          ansible_host: 203.0.113.10
+          ansible_user: root          # first run; afterwards hgadmin
+      vars:
+        hg_secrets_source: sops
+        hg_panel_domain: panel.heldengilde.nl
+        hg_wings_domain: wings.heldengilde.nl
+        hg_bluemap_domain: map.heldengilde.nl
+        hg_admin_email: beheer@heldengilde.nl
+        host_ingress: [direct]               # home PC: [cloudflared, playit] and hg_tls_mode: external
+        host_admin_authorized_keys:
+          - ssh-ed25519 AAAA... you@laptop
+        hg_backup_enabled: true
+        hg_s3_endpoint: https://fsn1.your-objectstorage.com   # or Backblaze B2 / MinIO / ...
+        hg_s3_region: fsn1

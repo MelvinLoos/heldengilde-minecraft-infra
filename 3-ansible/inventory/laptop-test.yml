@@ -15,3 +15,13 @@ all:
         host_admin_authorized_keys:
           - "{{ lookup('file', (lookup('env', 'HG_ROOT') | default(lookup('env', 'HOME') ~ '/hg-local', true)) ~ '/target-key.pub') }}"
         host_ssh_harden: false  # the test host is reached as root; production hardens
+        hg_infra_source: rsync
+        hg_tls_mode: external
+        hg_panel_domain: panel.test
+        hg_wings_domain: wings.test
+        hg_server_memory_mb: 20480
+        hg_node_scheme: http
+        hg_node_connect_port: 80
+        hg_content_repo: /srv/test-content.git
+        hg_premium_jars:
+          - "{{ lookup('env', 'HG_ROOT') | default(lookup('env', 'HOME') ~ '/hg-local', true) }}/custom-jars/MythicDungeons-2.1.0.jar"

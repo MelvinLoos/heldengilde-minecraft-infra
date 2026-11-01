@@ -1,0 +1,35 @@
+---
+- name: Agent config directory
+  ansible.builtin.file:
+    path: /etc/hg-gitops
+    state: directory
+    mode: "0755"
+
+- name: Agent config
+  ansible.builtin.template:
+    src: agent.env.j2
+    dest: /etc/hg-gitops/agent.env
+    mode: "0640"
+
+- name: Agent systemd units
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: "0644"
+  loop:
+    - hg-gitops@.service
+    - hg-gitops-sync.timer
+    - hg-gitops-snapshot.timer
+  notify: Reload agent units
+
+- name: Enable the timers
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+  loop:
+    - hg-gitops-sync.timer
+    - hg-gitops-snapshot.timer
+  # Content needs a content repo; without one only infra sync would make sense.
+  when: hg_content_repo | length > 0

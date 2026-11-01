@@ -1,0 +1,51 @@
+---
+- name: Agent config directory
+  ansible.builtin.file:
+    path: /etc/hg-gitops
+    state: directory
+    mode: "0755"
+
+- name: Stack description for the scripts
+  ansible.builtin.template:
+    src: stack.env.j2
+    dest: /etc/hg-gitops/stack.env
+    mode: "0644"
+
+- name: Render the panel stack
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ hg_root }}/panel/{{ item.dest }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - {src: compose.yml.j2, dest: compose.yml, mode: "0600"}
+    - {src: Caddyfile.j2, dest: Caddyfile, mode: "0644"}
+    - {src: panel.env.j2, dest: panel.env, mode: "0600"}
+  notify: Restart panel stack
+  no_log: true
+
+- name: Start the panel stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ hg_root }}/panel"
+    files: [compose.yml]
+    state: present
+
+- name: Initialise the panel (schema, admin, node, API keys)
+  ansible.builtin.command: "{{ hg_root }}/gitops/scripts/panel-init.sh"
+  environment:
+    COMPOSE_FILE: "{{ hg_root }}/panel/compose.yml"
+    STATE_DIR: "{{ hg_root }}/state"
+    PANEL_URL: http://127.0.0.1:8081
+    PANEL_HOST: "{{ hg_panel_domain }}"
+    PANEL_DB: "{{ hg_panel_db }}"
+    ADMIN_EMAIL: "{{ hg_admin_email }}"
+    NODE_NAME: "{{ inventory_hostname }}"
+    NODE_FQDN: "{{ hg_wings_domain }}"
+    NODE_SCHEME: "{{ hg_node_scheme }}"
+    NODE_BEHIND_PROXY: "1"
+    NODE_PORT: "8080"
+    NODE_CONNECT_PORT: "{{ hg_node_connect_port }}"
+    NODE_MEM_MB: "{{ hg_node_mem_mb | default(ansible_memtotal_mb | int - 2048) }}"
+    NODE_DISK_MB: "{{ hg_node_disk_mb | default(200000) }}"
+    VOLUMES_DIR: "{{ hg_volumes_dir }}"
+  register: hg_panel_init
+  changed_when: "'probably exists' not in hg_panel_init.stderr"
