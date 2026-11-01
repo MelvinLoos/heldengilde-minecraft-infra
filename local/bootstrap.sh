@@ -66,7 +66,10 @@ import re, sys
 root = sys.argv[1]
 p = f"{root}/etc/config.yml"
 s = open(p).read()
-s = s.replace("remote: 'http://localhost:8081'", "remote: 'http://panel'")
+# APP_URL is http://panel:8081 (browser); inside the compose network the panel answers on port 80.
+s = re.sub(r"remote: 'http://[^']*'", "remote: 'http://panel'", s)
+# The browser console opens a WebSocket to Wings with the panel's origin; Wings rejects unknown origins.
+s = s.replace("allowed_origins: []", "allowed_origins:\n  - http://panel:8081")
 s = s.replace("allowed_mounts: []", f"allowed_mounts:\n  - {root}/gitops\n  - {root}/custom-jars\n  - {root}/config\n  - {root}/lib/volumes")
 s = re.sub(r"(system:\n)", rf"\1  root_directory: {root}/lib\n  log_directory: {root}/log\n  tmp_directory: {root}/tmp\n  archive_directory: {root}/lib/archives\n  backup_directory: {root}/lib/backups\n  user:\n    passwd:\n      directory: {root}/etc\n  machine_id:\n    directory: {root}/etc/machine-id\n", s, count=1)
 open(p, "w").write(s)
