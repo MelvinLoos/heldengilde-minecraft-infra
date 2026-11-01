@@ -58,3 +58,15 @@ Verified:
 
 - Behaviour on an arm64 host (the spike ran on amd64; both `java25` images are multi-arch).
 - `RCON_CMDS_STARTUP`, `PATCH_DEFINITIONS` and the `?`-optional Modrinth entries (planned for Phase 2).
+
+## Phase 2 confirmation (generated egg, real definition)
+
+The egg generated from `4-server/env/server.env` was imported into local Pelican and a server created from it with the four mounts. It reached `running` in about 65 s with all 17 plugins enabled, as `988:988` with a read-only rootfs, and `OneWorldDungeons: true` / `UseLegacy: false` were in place on a fresh data dir.
+
+Additional findings:
+
+- **itzg patches (`PATCH_DEFINITIONS`) skip files that do not exist yet**, so on a fresh server they apply only from the second boot. Use whole files in `/config` for plugin configs that must be right on first boot; keep patches for files that already exist.
+- `RCON_CMDS_STARTUP` runs a few seconds after "Done"; check it with a retry, not immediately.
+- Importing an egg whose UUID already exists updates it in place; `provision.sh` skips the import when the egg name exists, so import the generated egg explicitly when it changes. Existing servers keep their old variable values, so update them with `PATCH /api/application/servers/{id}/startup`.
+- The `rtk` shell wrapper truncates `curl` and `docker logs`; use `rtk proxy` for those when scripting interactively.
+

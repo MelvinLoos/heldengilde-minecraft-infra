@@ -1,0 +1,3 @@
+# Heldengilde: partial config owned by Git. DiscordSRV fills in missing keys with its defaults.
+# The token is injected from the CFG_DISCORD_BOT_TOKEN egg variable (secret, via Pelican API).
+BotToken: "${CFG_DISCORD_BOT_TOKEN}"

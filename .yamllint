@@ -5,3 +5,5 @@ rules:
   truthy: disable
   comments:
     min-spaces-from-content: 1
+ignore: |
+  4-server/config/

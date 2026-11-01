@@ -1,0 +1,26 @@
+{
+  "_comment": "Jars that are not on Modrinth or are licensed. Never committed (ADR 0005). source is a URL, or local:<file> for premium jars found in $HG_PREMIUM_DIR.",
+  "jars": [
+    {
+      "name": "Geyser-Spigot.jar",
+      "source": "https://download.geysermc.org/v2/projects/geyser/versions/2.12.1/builds/1280/downloads/spigot",
+      "sha256": "8b01d2f8c7ef7de1dda6e8acd5d3e12ad377767b4d842580dac443a5f99031b2"
+    },
+    {
+      "name": "floodgate-spigot.jar",
+      "source": "https://download.geysermc.org/v2/projects/floodgate/versions/2.2.5/builds/141/downloads/spigot",
+      "sha256": "21570aff9ce17d6983928e8552777760e1ede5050026b04c686b0ae112e6fd7e"
+    },
+    {
+      "name": "Citizens-2.0.44-b4268.jar",
+      "source": "https://ci.citizensnpcs.co/job/Citizens2/4268/artifact/dist/target/Citizens-2.0.44-b4268.jar",
+      "sha256": "908e5c548aebe22cc2d8ca88e0068ccc781ce90509a28758ab6f8dc450256d67"
+    },
+    {
+      "name": "MythicDungeons-2.1.0.jar",
+      "source": "local:MythicDungeons-2.1.0.jar",
+      "sha256": "f6fbcef81f10164bbbb9b6765332cd6b050138075dca49cd54a5edd760354943",
+      "premium": true
+    }
+  ]
+}

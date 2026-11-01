@@ -1,0 +1,30 @@
+# Modrinth plugins for itzg MODRINTH_PROJECTS=@/gitops/4-server/plugins.txt
+# Format: slug:versionId, pinned. Full-line comments only (inline comments break itzg's parser).
+# Resolve new pins with the Modrinth API, filtered on loader=paper and the target game version.
+# Target: Paper 26.2 (ADR 0004). plugins-26.3.txt is the upgrade candidate. Non-Modrinth jars live in custom-jars.lock.json (ADR 0005).
+
+# Compatibility
+viaversion:Fkfcr89K
+
+# Community, voice and safety
+simple-voice-chat:5OqsnSs7
+discordsrv:ATlquwiT
+luckperms:b0mk8uS6
+packetevents:m78nFxYg
+griefprevention:dGfCZHqk
+
+# CoreProtect 24.1 supports up to 26.2 and refuses to start on 26.3.
+coreprotect:3sehX6Sg
+
+# World, structures and dungeons (WorldEdit is a hard dependency of BetterStructures)
+worldedit:YFnqiUlL
+multiverse-core:de7TbcZG
+betterstructures:UCCei1Tz
+datapack:terralith:CzijfXJQ
+
+# Quests and mobs
+betonquest:Sfp4oOVr
+mythicmobs:ionz4v5c
+
+# Admin tools
+bluemap:uHQIrUdf

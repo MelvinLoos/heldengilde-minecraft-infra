@@ -1,0 +1,32 @@
+# Modrinth plugins for itzg MODRINTH_PROJECTS=@/gitops/4-server/plugins.txt
+# Format: slug:versionId, pinned. Full-line comments only (inline comments break itzg's parser).
+# Resolve new pins with the Modrinth API, filtered on loader=paper and the target game version.
+# UPGRADE CANDIDATE for Paper 26.3 (ADR 0004). Not used until CoreProtect supports 26.3.
+# Boot test: HG_EXTRA_ENV="VERSION=26.3 PAPER_BUILD=235 MODRINTH_PROJECTS=@/gitops/4-server/plugins-26.3.txt" local/boot-test.sh
+# Non-Modrinth jars live in custom-jars.lock.json (ADR 0005).
+
+# Compatibility
+viaversion:Fkfcr89K
+
+# Community, voice and safety
+simple-voice-chat:5OqsnSs7
+discordsrv:ATlquwiT
+luckperms:b0mk8uS6
+packetevents:m78nFxYg
+griefprevention:MtwPHMAS
+
+# CoreProtect 24.1 refuses to start on 26.3 ("Minecraft 26.3 is not supported"), so it is left out.
+# coreprotect:3sehX6Sg
+
+# World, structures and dungeons (WorldEdit is a hard dependency of BetterStructures)
+worldedit:YFnqiUlL
+multiverse-core:de7TbcZG
+betterstructures:UCCei1Tz
+datapack:terralith:fqnsIp6d
+
+# Quests and mobs (BetonQuest only publishes DEV builds for 26.3)
+betonquest:4tlRwffv
+mythicmobs:ionz4v5c
+
+# Admin tools
+bluemap:uHQIrUdf
