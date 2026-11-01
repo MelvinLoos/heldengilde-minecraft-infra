@@ -9,7 +9,7 @@
 | Citizens, MythicDungeons YAML | `hg-gitops snapshot-server-content` | branch `autosync/server` of the content repo | daily 04:00 |
 | Config, plugin pins | Git | infra repo | n/a |
 
-S3 endpoints: MinIO locally (`local/minio.sh`), and for production any S3-compatible service (Backblaze B2, Hetzner Object Storage, ...): set `hg_s3_endpoint`, `hg_s3_region`, `hg_s3_bucket`, `hg_s3_path_style` and the `hg_s3_key`/`hg_s3_secret` secrets. The `APP_KEY` travels inside the panel bundle, so use a private bucket (and a bucket-side encryption policy if the provider offers one).
+S3 endpoints: SeaweedFS locally (MinIO no longer publishes images) (`local/s3.sh`), and for production any S3-compatible service (Backblaze B2, Hetzner Object Storage, ...): set `hg_s3_endpoint`, `hg_s3_region`, `hg_s3_bucket`, `hg_s3_path_style` and the `hg_s3_key`/`hg_s3_secret` secrets. The `APP_KEY` travels inside the panel bundle, so use a private bucket (and a bucket-side encryption policy if the provider offers one).
 
 ## Restore the world
 
@@ -31,4 +31,4 @@ Open the PR `autosync/server` history in the content repo and check out the file
 
 ## Test the restore regularly
 
-Run `local/minio.sh`, create a backup of the local server in the Panel, and restore it into a second server. A backup you have never restored is a guess.
+Run `local/s3.sh`, create a backup of the local server in the Panel, and restore it into a second server. A backup you have never restored is a guess.

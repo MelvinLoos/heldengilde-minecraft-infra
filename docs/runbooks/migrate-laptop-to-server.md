@@ -56,7 +56,13 @@ ansible-playbook -i inventory/production.yml site.yml --tags node,server,agent,b
 - The server shows under the node, starts, and `/data` has your world.
 - Players connect on the real address; `hg-gitops` timers are active (`systemctl list-timers 'hg-*'`).
 
+## Verification (2026-11-01)
+
+Exported the stopped `hg-spike` server from the laptop stack, imported it into the Ansible-built Ubuntu 24.04 test host, re-rendered the Wings config with `--tags node`. Result: Panel DB restored, node renamed and re-pointed (`wings.test`, http, port 80), the four mounts re-pointed to target paths, volume restored with owner 988:988, Wings started the container with those mounts. The spike server then stopped in itzg's Modrinth step (old spike-era env, not investigated); the freshly provisioned `hg-paper` server on the same host boots fine.
+
 ## Notes and limits
+
+- The bundle holds the **whole** Panel database but the volume of only one server (`SERVER_NAME`). Other servers' records arrive without data; delete them in the Panel or export them too.
 
 - The server's `server.properties` and plugin data came from the laptop. Settings from `4-server/env/server.env` are re-applied by itzg at every start, so the server converges on Git state.
 - Resource limits (memory, disk) in the Panel database are the laptop's; adjust them in the Panel if the server has less RAM.

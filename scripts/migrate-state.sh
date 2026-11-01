@@ -97,17 +97,17 @@ do_import() {
   dc exec -T -u www-data \
     -e "M_NODE=$NODE_NAME" -e "M_FQDN=${NODE_FQDN:-}" -e "M_SCHEME=${NODE_SCHEME:-https}" \
     -e "M_PROXY=${NODE_BEHIND_PROXY:-1}" -e "M_CONNECT=${NODE_CONNECT_PORT:-443}" -e "M_BASE=$VOLUMES_DIR" \
-    -e "M_GITOPS=$GITOPS_SRC" -e "M_JARS=$JARS_SRC" -e "M_CONFIG=$CONFIG_SRC" -e "M_SERVER=$SERVER_NAME" \
+    -e "M_GITOPS=$GITOPS_SRC" -e "M_JARS=$JARS_SRC" -e "M_CONFIG=$CONFIG_SRC" \
     panel php artisan tinker --execute='
       $n = App\Models\Node::query()->orderBy("id")->firstOrFail();
       $n->forceFill(["name" => getenv("M_NODE"), "scheme" => getenv("M_SCHEME"), "behind_proxy" => getenv("M_PROXY") === "1",
         "daemon_connect" => (int) getenv("M_CONNECT"), "daemon_base" => getenv("M_BASE")]);
       if (getenv("M_FQDN") !== "") { $n->fqdn = getenv("M_FQDN"); }
       $n->save();
-      $s = App\Models\Server::where("name", getenv("M_SERVER"))->firstOrFail();
       foreach (App\Models\Mount::all() as $m) {
+        $owner = $m->servers()->first();
         $src = match (true) {
-          str_ends_with($m->name, "-data") => getenv("M_BASE") . "/" . $s->uuid,
+          str_ends_with($m->name, "-data") && $owner => getenv("M_BASE") . "/" . $owner->uuid,
           str_ends_with($m->name, "-gitops") => getenv("M_GITOPS"),
           str_ends_with($m->name, "-jars") => getenv("M_JARS"),
           str_ends_with($m->name, "-config") => getenv("M_CONFIG"),
