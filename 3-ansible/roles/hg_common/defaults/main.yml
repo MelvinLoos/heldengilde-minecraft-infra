@@ -13,7 +13,7 @@ hg_content_repo: git@github.com:heldengilde/heldengilde-minecraft-content.git
 hg_content_branch: main
 
 # Panel
-hg_panel_image: ghcr.io/pelican/panel:v1.0.0-beta38
+hg_panel_image: ghcr.io/pelican/panel:v1.0.0-rc.2
 hg_panel_db: sqlite              # sqlite | mariadb
 hg_panel_domain: panel.example.org
 hg_wings_domain: wings.example.org

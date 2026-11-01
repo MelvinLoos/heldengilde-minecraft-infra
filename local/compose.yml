@@ -5,7 +5,7 @@ name: hg-local
 
 services:
   panel:
-    image: ghcr.io/pelican/panel:v1.0.0-beta38
+    image: ghcr.io/pelican/panel:v1.0.0-rc.2
     restart: unless-stopped
     ports:
       - "127.0.0.1:8081:80"
