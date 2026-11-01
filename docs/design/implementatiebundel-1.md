@@ -9,7 +9,7 @@ Dit document bevat de herziene, productie-klare architectuur en configuratiebest
 Om *data loss*, permissie-conflicten en onveilige tokens in de game-container te voorkomen, hanteren we vier strikte DevOps-principes:
 
 1. **Pull-Based Host Agent (`hg-gitops`):** Er draait **geen Git en er staan geen GitHub-tokens** binnenin de Minecraft-container. Een lichtgewicht `systemd`-agent op de Ubuntu-host beheert de Git-checkouts en communiceert met de server via de Pelican Client API.
-2. **Pelican Mounts voor `/data` en `/gitops`:** 
+2. **Pelican Mounts voor `/data` en `/gitops`:**
    * Wings mount standaard `/home/container`. We configureren een **Pelican Mount** die de server-volumedirectory (`/var/lib/pelican/volumes/<uuid>`) direct op `/data` bind-mount, zodat `itzg`, de Pelican File Manager en de Pelican S3-backups exact dezelfde data zien.
    * Een tweede **Read-Only Pelican Mount** koppelt `/opt/heldengilde/infra/4-server` op de host aan `/gitops` in de container.
 3. **Single-Writer Eigenaarschap (Geen Bi-Directionele Race Conditions):** Elke map heeft exact één eigenaar (Git óf de Server), gescheiden over twee repositories (`heldengilde-infra` en `heldengilde-content`).

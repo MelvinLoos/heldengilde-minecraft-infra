@@ -1,0 +1,7 @@
+# Keep all default rules; allow only the dummy value used to test CFG_ interpolation.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Dummy fixture value in local/spike-test.sh and local/spike/egg-itzg.yaml"
+regexes = ['''s3cret-from-env''']

@@ -44,6 +44,8 @@ The masterplan (`docs/design/masterplan.md`) and implementation bundle #1 (`docs
 
 ## D. Plugin list (Modrinth API, filtered on Paper + 26.3)
 
+> Snapshot taken before the Phase 2 boot test. The final pins are in `4-server/plugins.txt` (Paper 26.2). CoreProtect did not start on 26.3, so BetonQuest, GriefPrevention and Terralith moved to their 26.2 builds. See [ADR 0004](0004-mc-version-and-java25.md).
+
 | Entry | Status |
 |---|---|
 | `automodpack` | ❌ Fabric/Forge only |
@@ -64,7 +66,7 @@ The masterplan (`docs/design/masterplan.md`) and implementation bundle #1 (`docs
 
 ## E. Configuration correctness
 
-- **E1.** The default `1.21.4` is stale. The target is now 26.3/Java 25, with the fallback ladder in Decisions.
+- **E1.** The default `1.21.4` is stale. The target was 26.3/Java 25; after the Phase 2 boot test it is 26.2/Java 25 (ADR 0004).
 - **E2.** `paper-global.yml` belongs in `/data/config/`.
 - **E3.** itzg rewrites `server.properties` from env vars and manages RCON itself, and Pelican sets `SERVER_PORT`. Use env vars as the single source, with no hard-coded `server-port` or `rcon.*`.
 - **E4.** `keepInventory` is a per-world gamerule. Set it with `RCON_CMDS_STARTUP`.
@@ -100,4 +102,3 @@ See [ADR 0002](0002-runtime-itzg-under-wings-mounts.md) for the full list. Short
 - itzg's `/config` sync defaults to `/data/config` and lets newer files in `/data` win. Both defaults break the Git-owned zone and need overriding (`COPY_CONFIG_DEST`, `SYNC_SKIP_NEWER_IN_DESTINATION`).
 - Pelican panel `v1.0.0-beta38`: `POST /api/application/mounts` ignores all fields (upstream bug), so mounts are created with `artisan tinker`.
 - The original bundle's idea of replacing config on each start with a script was also unnecessary: itzg does this natively.
-

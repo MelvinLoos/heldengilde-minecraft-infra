@@ -1,6 +1,6 @@
 # heldengilde-minecraft-infra
 
-GitOps for the Heldengilde Minecraft server: OCI ARM64 host (OpenTofu), cloud-init, Ansible, Pelican Panel + Wings, and `itzg/minecraft-server` (Paper 26.3, Java 25).
+GitOps for the Heldengilde Minecraft server: OCI ARM64 host (OpenTofu), cloud-init, Ansible, Pelican Panel + Wings, and `itzg/minecraft-server` (Paper 26.2 now, 26.3 once CoreProtect supports it; Java 25).
 
 Quest and NPC content lives in the separate `heldengilde-minecraft-content` repo.
 
@@ -11,15 +11,16 @@ Quest and NPC content lives in the separate `heldengilde-minecraft-content` repo
 | `1-terraform/` | OCI network and VM |
 | `2-cloud-init/` | First-boot install (Docker, Wings binary) |
 | `3-ansible/` | Panel, Wings config, API bootstrap |
-| `4-server/` | Server definition: plugins, config, patches, egg |
+| `4-server/` | Server definition: plugins, jar lock, config, generated egg |
 | `agent/` | `hg-gitops` host agent (systemd timers) |
 | `local/` | Local Pelican + Wings test stack and spike tests |
+| `.github/workflows/` | CI: lint, egg-in-sync check, secret scan, boot test |
 | `docs/adr/` | Architecture decisions (start with 0001) |
 | `docs/design/` | Original design docs, superseded in part by the ADRs |
 
 ## Status
 
-Phases 0 (scaffold), 1 (runtime spike) and 2 (server definition) are done. Next: Phase 3 (CI). See ADR 0002 and 0004.
+Phases 0 (scaffold), 1 (runtime spike), 2 (server definition) and 3 (CI) are done. Next: Milestone 2, Phase 4 (OpenTofu on OCI). See ADR 0002 and 0004.
 
 ## Local spike
 
@@ -45,3 +46,14 @@ local/spike-test.sh         # PASS/FAIL checks for the runtime
 4-server/build-egg.sh > 4-server/egg.yaml          # regenerate after editing env/server.env
 HG_PREMIUM_DIR=<dir with MythicDungeons-2.1.0.jar> local/boot-test.sh   # omit the dir in CI
 ```
+
+## Checks
+
+```bash
+pipx install pre-commit yamllint && pre-commit install   # once
+local/lint.sh              # same checks CI runs (yamllint, shellcheck, egg in sync, jar lock, pins)
+local/boot-test.sh         # boots the server definition in Docker (~3 min)
+```
+
+CI (`.github/workflows/validate.yml`) runs lint, a full-history gitleaks scan and the boot test without the premium jar. It only validates; it never deploys. It has been linted with `actionlint` but has not yet run on GitHub, because this repo has no remote.
+

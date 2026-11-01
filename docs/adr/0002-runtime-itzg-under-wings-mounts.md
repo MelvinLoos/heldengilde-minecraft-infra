@@ -69,4 +69,3 @@ Additional findings:
 - `RCON_CMDS_STARTUP` runs a few seconds after "Done"; check it with a retry, not immediately.
 - Importing an egg whose UUID already exists updates it in place; `provision.sh` skips the import when the egg name exists, so import the generated egg explicitly when it changes. Existing servers keep their old variable values, so update them with `PATCH /api/application/servers/{id}/startup`.
 - The `rtk` shell wrapper truncates `curl` and `docker logs`; use `rtk proxy` for those when scripting interactively.
-
