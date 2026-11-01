@@ -65,7 +65,9 @@ CONFIG_SRC=$HG_ROOT/gitops/4-server/config SERVER_PORT=25565 scripts/provision-s
 
 In the Panel: open the server, press **Start**, and wait for `Done` in the console (about 30 s on later starts; the first start downloads the image and plugins). Then join `localhost:25565` in Minecraft. First start of a world takes longer.
 
-Not wired up yet locally: **Bedrock** (UDP 19132), **voice chat** (UDP 24454) and **BlueMap** (port 8100) need extra Pelican allocations that the provisioning script does not create yet. On a server, BlueMap is published at `https://<hg_bluemap_domain>` behind a password once that allocation exists.
+`provision-server.sh` also creates allocations for **Bedrock** (UDP 19132), **voice chat** (UDP 24454) and **BlueMap** (port 8100, `http://localhost:8100`). Re-running it on an existing server adds the missing allocations; restart the server to publish the ports. On a server, BlueMap is published at `https://<hg_bluemap_domain>` behind a password.
+
+Account-link whitelisting (ADR 0001 E6) is the egg variable `CFG_DISCORDSRV_REQUIRE_LINK` (default `false`; Ansible sets it to `true` once `hg_discord_bot_token` is set). Change it on an existing server in Panel admin, server, Startup.
 
 **Day to day**
 
@@ -95,7 +97,7 @@ ansible-playbook -i inventory/production.yml site.yml
 | **Wings** (the browser console connects here) | `https://wings.<domain>` | not for browsing |
 | **BlueMap** | `https://<hg_bluemap_domain>` (if set) | user `heldengilde`, password from `hg_bluemap_basicauth_hash` |
 | **Minecraft (Java)** | `<domain>:25565` | |
-| Voice chat / Bedrock | UDP 24454 / UDP 19132 (ports are opened, allocations still to do) | |
+| Voice chat / Bedrock | UDP 24454 / UDP 19132 | |
 
 The agent then keeps the host in sync every 5 minutes: infra repo changes apply at the next server restart, content-repo changes (quests, mobs) are deployed and reloaded without a restart, and server-owned YAML is snapshotted nightly to the `autosync/server` branch. Check it with `systemctl list-timers 'hg-*'` and `journalctl -u 'hg-gitops@*'` on the host.
 

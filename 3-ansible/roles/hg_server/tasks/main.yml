@@ -8,6 +8,9 @@
     PANEL_HOST: "{{ hg_panel_domain }}"
     SERVER_NAME: "{{ hg_server_name }}"
     SERVER_PORT: "{{ hg_server_port }}"
+    VOICE_PORT: "{{ hg_voice_port }}"
+    BEDROCK_PORT: "{{ hg_bedrock_port }}"
+    BLUEMAP_PORT: "{{ hg_bluemap_port }}"
     SERVER_MEMORY_MB: "{{ hg_server_memory_mb }}"
     SERVER_DISK_MB: "{{ hg_server_disk_mb }}"
     VOLUMES_DIR: "{{ hg_volumes_dir }}"
@@ -18,4 +21,4 @@
   register: hg_provision
   no_log: true
   when: hg_provision_server
-  changed_when: "'importing egg' in hg_provision.stdout or 'server id' in hg_provision.stdout"
+  changed_when: "'importing egg' in hg_provision.stdout or 'updating egg' in hg_provision.stdout or 'adding allocations' in hg_provision.stdout or 'server id' in hg_provision.stdout"

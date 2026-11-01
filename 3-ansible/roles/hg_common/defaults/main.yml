@@ -19,6 +19,8 @@ hg_panel_domain: panel.example.org
 hg_wings_domain: wings.example.org
 hg_bluemap_domain: ""            # set to publish BlueMap behind Caddy basic auth
 hg_bluemap_port: 8100
+hg_voice_port: 24454             # UDP; keep in sync with host_game_udp_ports (1-host-bootstrap)
+hg_bedrock_port: 19132           # UDP; keep in sync with host_game_udp_ports (1-host-bootstrap)
 hg_tls_mode: acme                # acme: Caddy gets Let's Encrypt certs | external: a tunnel/proxy terminates TLS, Caddy serves plain HTTP
 hg_admin_email: admin@example.org
 hg_caddy_image: caddy:2.10.0-alpine
@@ -50,5 +52,8 @@ hg_panel_db_user: panel
 
 # Set false to stop after the panel/node (used before importing a migration bundle, see docs/runbooks).
 hg_provision_server: true
+# DiscordSRV account-link whitelist (ADR 0001 E6). Needs a working bot, otherwise nobody can join.
+hg_discord_require_link: "{{ (hg_discord_bot_token | default('', true) | length) > 0 }}"
 hg_server_extra_env:
   CFG_DISCORD_BOT_TOKEN: "{{ hg_discord_bot_token | default('unset', true) }}"  # egg requires a value; DiscordSRV stays disconnected until a real token is set
+  CFG_DISCORDSRV_REQUIRE_LINK: "{{ hg_discord_require_link | bool | string | lower }}"

@@ -3,7 +3,7 @@
 # allocation, server, then the Mounts from ADR 0002. Shared by local/ and the Ansible role hg_server.
 #
 # Required env: COMPOSE_FILE (panel compose file), STATE_DIR (holds app-key, node-id)
-# Optional env: PANEL_URL PANEL_HOST EGG_FILE SERVER_NAME SERVER_PORT SERVER_MEMORY_MB SERVER_DISK_MB
+# Optional env: PANEL_URL PANEL_HOST EGG_FILE SERVER_NAME SERVER_PORT VOICE_PORT BEDROCK_PORT BLUEMAP_PORT SERVER_MEMORY_MB SERVER_DISK_MB
 #   SERVER_IMAGE EXTRA_ENV_JSON VOLUMES_DIR GITOPS_SRC JARS_SRC CONFIG_SRC
 set -euo pipefail
 
@@ -14,6 +14,9 @@ here="$(cd "$(dirname "$0")" && pwd)"
 EGG_FILE="${EGG_FILE:-$here/../4-server/egg.yaml}"
 SERVER_NAME="${SERVER_NAME:-hg-paper}"
 SERVER_PORT="${SERVER_PORT:-25565}"
+VOICE_PORT="${VOICE_PORT:-24454}"
+BEDROCK_PORT="${BEDROCK_PORT:-19132}"
+BLUEMAP_PORT="${BLUEMAP_PORT:-8100}"
 SERVER_MEMORY_MB="${SERVER_MEMORY_MB:-20480}"
 SERVER_DISK_MB="${SERVER_DISK_MB:-40960}"
 SERVER_IMAGE="${SERVER_IMAGE:-itzg/minecraft-server:java25}"
@@ -34,21 +37,42 @@ api() { # method path [curl args]
 }
 egg_id() { api GET /eggs | jq -r --arg n "$EGG_NAME" '.data[]|select(.attributes.name==$n)|.attributes.id' | head -1; }
 
-# 1. Egg (imported once by name; delete the egg in the panel to re-import a changed one)
+# 1. Egg (matched by name; re-imported when egg.yaml declares a variable the panel does not know yet)
+egg_has_vars() { # every env_variable in the egg file exists on the panel egg
+  local have want
+  have=$(api GET "/eggs/$id?include=variables" | jq -r '.attributes.relationships.variables.data[].attributes.env_variable' | sort)
+  want=$(sed -n 's/^    env_variable: *//p' "$EGG_FILE" | sort)
+  [ -z "$(comm -13 <(echo "$have") <(echo "$want"))" ]
+}
+import_egg() {
+  curl -fsS -X POST -H "Host: $PANEL_HOST" -H "Authorization: Bearer $KEY" -H "Accept: application/json" \
+    -H "Content-Type: application/yaml" --data-binary "@$EGG_FILE" "$API/eggs/import" >/dev/null
+}
 id=$(egg_id)
 if [ -z "$id" ]; then
   echo "importing egg $EGG_NAME"
-  curl -fsS -X POST -H "Host: $PANEL_HOST" -H "Authorization: Bearer $KEY" -H "Accept: application/json" \
-    -H "Content-Type: application/yaml" --data-binary "@$EGG_FILE" "$API/eggs/import" >/dev/null
+  import_egg
   id=$(egg_id)
+elif ! egg_has_vars; then
+  echo "updating egg $EGG_NAME"
+  import_egg
 fi
 echo "egg_id=$id"
 
-# 2. Allocation
-if [ "$(api GET "/nodes/$NODE_ID/allocations" | jq --argjson p "$SERVER_PORT" '[.data[]|select(.attributes.port==$p)]|length')" = 0 ]; then
-  api POST "/nodes/$NODE_ID/allocations" -d "{\"ip\":\"0.0.0.0\",\"ports\":[\"$SERVER_PORT\"]}" >/dev/null
-fi
-alloc=$(api GET "/nodes/$NODE_ID/allocations" | jq -r --argjson p "$SERVER_PORT" '.data[]|select(.attributes.port==$p)|.attributes.id')
+# 2. Allocations. Wings publishes every allocation on the container as TCP and UDP; the host firewall
+# (1-host-bootstrap) decides what is reachable from the internet.
+alloc_id() { api GET "/nodes/$NODE_ID/allocations?per_page=500" | jq -r --argjson p "$1" '.data[]|select(.attributes.port==$p)|.attributes.id' | head -1; }
+ensure_alloc() {
+  if [ -z "$(alloc_id "$1")" ]; then
+    api POST "/nodes/$NODE_ID/allocations" -d "{\"ip\":\"0.0.0.0\",\"ports\":[\"$1\"]}" >/dev/null
+  fi
+  alloc_id "$1"
+}
+alloc=$(ensure_alloc "$SERVER_PORT")
+extra_json="[]"
+for p in "$VOICE_PORT" "$BEDROCK_PORT" "$BLUEMAP_PORT"; do
+  extra_json=$(jq -c --argjson a "$(ensure_alloc "$p")" '. + [$a]' <<<"$extra_json")
+done
 
 # 3. Server
 find_srv() { api GET /servers | jq -c --arg n "$SERVER_NAME" '.data[]|select(.attributes.name==$n)|.attributes|{id,uuid}' | head -1; }
@@ -56,17 +80,28 @@ srv=$(find_srv)
 if [ -z "$srv" ]; then
   env_json=$(api GET "/eggs/$id?include=variables" | jq -c '[.attributes.relationships.variables.data[].attributes|{(.env_variable):.default_value}]|add')
   body=$(jq -nc --argjson env "$(jq -nc --argjson a "$env_json" --argjson b "$EXTRA_ENV_JSON" '$a + $b')" \
-    --argjson egg "$id" --argjson alloc "$alloc" --arg name "$SERVER_NAME" --arg img "$SERVER_IMAGE" \
+    --argjson egg "$id" --argjson alloc "$alloc" --argjson extra "$extra_json" --arg name "$SERVER_NAME" --arg img "$SERVER_IMAGE" \
     --argjson mem "$SERVER_MEMORY_MB" --argjson disk "$SERVER_DISK_MB" '{
     name:$name, user:1, egg:$egg, docker_image:$img,
     startup:"itzg-entrypoint", environment:$env,
     limits:{memory:$mem,swap:0,disk:$disk,io:500,cpu:0},
-    feature_limits:{databases:0,backups:5,allocations:1}, allocation:{default:$alloc}}')
+    feature_limits:{databases:0,backups:5,allocations:4}, allocation:{default:$alloc, additional:$extra}}')
   api POST /servers -d "$body" | jq -c '.errors // empty' >&2
   srv=$(find_srv)
 fi
 sid=$(jq -r .id <<<"$srv"); suuid=$(jq -r .uuid <<<"$srv")
 echo "server id=$sid uuid=$suuid"
+
+# 3b. Existing servers: add missing extra allocations (additive, never removes). Applied at the next server restart.
+cur=$(api GET "/servers/$sid?include=allocations")
+missing=$(jq -c --argjson want "$extra_json" '[.attributes.relationships.allocations.data[].attributes.id] as $have | $want - $have' <<<"$cur")
+if [ "$missing" != "[]" ]; then
+  echo "adding allocations $missing (restart the server to publish the ports)"
+  body=$(jq -c --argjson add "$missing" '.attributes as $a | {allocation:$a.allocation,
+    feature_limits:{databases:$a.feature_limits.databases, backups:$a.feature_limits.backups,
+      allocations:([$a.feature_limits.allocations, 4]|max)}, add_allocations:$add}' <<<"$cur")
+  api PATCH "/servers/$sid/build" -d "$body" >/dev/null
+fi
 
 # 4. Mounts. POST /mounts ignores all fields in panel v1.0.0-beta38 (no validation rules), so use tinker.
 mount() { # name source target readonly(true|false)

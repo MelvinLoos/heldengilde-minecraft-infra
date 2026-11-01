@@ -286,6 +286,17 @@ variables:
       - string
   -
     sort: 24
+    name: 'CFG_DISCORDSRV_REQUIRE_LINK'
+    description: 'Managed in Git (4-server/env/server.env).'
+    env_variable: CFG_DISCORDSRV_REQUIRE_LINK
+    default_value: 'false'
+    user_viewable: true
+    user_editable: true
+    rules:
+      - required
+      - string
+  -
+    sort: 25
     name: 'CFG_DISCORD_BOT_TOKEN'
     description: 'Managed in Git (4-server/env/server.env).'
     env_variable: CFG_DISCORD_BOT_TOKEN

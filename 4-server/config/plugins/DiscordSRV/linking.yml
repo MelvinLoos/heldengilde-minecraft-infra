@@ -1,0 +1,14 @@
+# Heldengilde: partial config owned by Git. DiscordSRV fills in missing keys with its defaults.
+# ADR 0001 E6: the linked-account requirement is the only whitelist (not the vanilla whitelist).
+# CFG_DISCORDSRV_REQUIRE_LINK is an egg variable: false until a real bot token is set, otherwise nobody can join.
+Require linked account to play:
+  Enabled: ${CFG_DISCORDSRV_REQUIRE_LINK}
+  Bypass names: []
+  Whitelisted players bypass check: false
+  Must be in Discord server: true
+  Not linked message: "&7Je moet je &9Discord&7-account koppelen om te spelen.\n\n&7Stuur een DM naar &b{BOT}&7 met alleen &b{CODE}&7 om te koppelen.\n\n&7Discord-uitnodiging » &b{INVITE}"
+  Messages:
+    DiscordSRV still starting: "&cDe koppeling met Discord is nog niet klaar.\n\nProbeer het over een minuut opnieuw."
+    Not in server: "&cJe zit niet in onze Discord-server.\n\nWord lid via {INVITE}!"
+    Failed for unknown reason: "&cEr ging iets mis bij het controleren van je account.\n\nNeem contact op met de beheerders."
+    Kicked for unlinking: "&cJe bent verwijderd omdat je je accounts hebt ontkoppeld.\n\nKom terug om opnieuw te koppelen."

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Renders the Pelican egg (PLCN_v3 YAML) from env/server.env, so the egg defaults and the
 # local boot test share one source of truth. Secrets are declared with empty defaults and
-# are set per server through the Pelican API (SOPS), never committed.
+# are set per server through the Pelican API (SOPS), never committed. Toggles are CFG_* switches
+# that are not secret and not in server.env; they are editable in the panel and default to off.
 # Usage: 4-server/build-egg.sh > 4-server/egg.yaml
 set -euo pipefail
 
@@ -11,6 +12,8 @@ image="${ITZG_IMAGE:-itzg/minecraft-server:java25}"
 
 # Variables the panel should show to admins (the rest are hidden). Secrets are listed last.
 secrets=(CFG_DISCORD_BOT_TOKEN)
+# Non-secret CFG_* switches as NAME=default. DiscordSRV linking.yml needs a bot, so it is off until one is set.
+toggles=(CFG_DISCORDSRV_REQUIRE_LINK=false)
 
 emit_var() { # sort name env default viewable editable
   printf '  -\n    sort: %s\n    name: %s\n    description: %s\n    env_variable: %s\n    default_value: %s\n    user_viewable: %s\n    user_editable: %s\n    rules:\n      - %s\n      - string\n' \
@@ -61,6 +64,11 @@ while IFS= read -r line; do
   emit_var "$n" "$key" "$key" "$val" "$view" false required
   n=$((n + 1))
 done < "$env_file"
+
+for t in "${toggles[@]}"; do
+  emit_var "$n" "${t%%=*}" "${t%%=*}" "${t#*=}" true true required
+  n=$((n + 1))
+done
 
 for s in "${secrets[@]}"; do
   emit_var "$n" "$s" "$s" "" false true required
