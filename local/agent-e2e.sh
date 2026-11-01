@@ -18,8 +18,8 @@ echo "server $UUID"
 # Fresh content repo with one commit, and a clean agent state, so the test can be re-run.
 on 'rm -rf /srv/test-content.git /tmp/cw /srv/heldengilde/content /srv/heldengilde/content-autosync /srv/heldengilde/state/content-deployed
   git init -q --bare -b main /srv/test-content.git && git clone -q /srv/test-content.git /tmp/cw 2>/dev/null && cd /tmp/cw
-  mkdir -p BetonQuest/hub MythicMobs/Mobs MythicMobs/Skills MythicMobs/Items server-owned
-  echo "# quest v1" > BetonQuest/hub/package.yml; echo "HubGuard: {Type: ZOMBIE}" > MythicMobs/Mobs/hub.yml
+  mkdir -p BetonQuest/QuestPackages/hub MythicMobs/Mobs MythicMobs/Skills MythicMobs/Items server-owned
+  echo "# quest v1" > BetonQuest/QuestPackages/hub/package.yml; echo "HubGuard: {Type: ZOMBIE}" > MythicMobs/Mobs/hub.yml
   touch MythicMobs/Skills/.keep MythicMobs/Items/.keep server-owned/.keep
   git add -A && git -c user.name=t -c user.email=t@t commit -qm "initial content" && git push -q origin main'
 push() { on "cd /tmp/cw && git add -A && git -c user.name=t -c user.email=t@t commit -qm '$1' && git push -q origin main"; }
@@ -32,7 +32,7 @@ check "files owned by uid 988"        on "test \"\$(stat -c %u $VOL/plugins/Beto
 
 echo "--- deletion propagates, server-owned files survive"
 on "mkdir -p $VOL/plugins/Citizens && echo 'npc: guard' > $VOL/plugins/Citizens/saves.yml"
-on "cd /tmp/cw && git rm -q MythicMobs/Mobs/hub.yml && echo '# quest v2' > BetonQuest/hub/package.yml"
+on "cd /tmp/cw && git rm -q MythicMobs/Mobs/hub.yml && echo '# quest v2' > BetonQuest/QuestPackages/hub/package.yml"
 push "update content"
 on "$AGENT deploy-content"
 check "package updated"               on "grep -q 'quest v2' $VOL/plugins/BetonQuest/QuestPackages/hub/package.yml"

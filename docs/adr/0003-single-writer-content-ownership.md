@@ -10,7 +10,7 @@ Every path has exactly one writer. A pull-based host agent (`hg-gitops`) moves d
 | Content | Owner | Flow |
 |---|---|---|
 | Server config, plugins, custom-jar lock | Git (`heldengilde-minecraft-infra`) | Applied at next restart |
-| BetonQuest packages, MythicMobs mobs/skills/items | Git (`heldengilde-minecraft-content`, PR-reviewed) | Agent `rsync --delete` into `/data`, then `bq reload` / `mm reload` through the Pelican Client API |
+| BetonQuest packages (`BetonQuest/QuestPackages/` -> `plugins/BetonQuest/QuestPackages/`), MythicMobs mobs/skills/items | Git (`heldengilde-minecraft-content`, PR-reviewed) | Agent `rsync --delete` into `/data`, then `bq reload` / `mm reload` through the Pelican Client API |
 | Citizens `saves.yml`, MythicDungeons YAML under `plugins/MythicDungeons/maps/*/` (not `dungeons/`; that folder also holds world data, so snapshot `*.yml` only) and `loottables/` | Server | Agent runs `save-all` + `citizens save`, snapshots to branch `autosync/server`, auto-PR to `main`. Restore is a runbook |
 | Worlds, OneWorldDungeons world, dungeon maps/schematics | Server | Pelican scheduled backups to an S3-compatible bucket (ADR 0007). Never in Git |
 

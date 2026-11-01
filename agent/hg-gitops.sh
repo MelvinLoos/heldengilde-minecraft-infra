@@ -100,7 +100,7 @@ cmd_deploy_content() {
   # dir so deletions propagate (B4). The checkout is known good here (git_pull just succeeded).
   empty=$(mktemp -d)
   mirror_or_empty() { mirror "$([ -d "$1" ] && echo "$1" || echo "$empty")" "$2"; }
-  mirror_or_empty "$CONTENT/BetonQuest" "$VOL/plugins/BetonQuest/QuestPackages"
+  mirror_or_empty "$CONTENT/BetonQuest/QuestPackages" "$VOL/plugins/BetonQuest/QuestPackages"
   for d in Mobs Skills Items; do
     mirror_or_empty "$CONTENT/MythicMobs/$d" "$VOL/plugins/MythicMobs/$d"
   done

@@ -40,7 +40,7 @@ jobs:
             detect --source /repo --redact --verbose
 
   boot-test:
-    # Boots the real server definition (16 of 17 plugins: the premium MythicDungeons jar
+    # Boots the real server definition (19 of 20 plugins: the premium MythicDungeons jar
     # is not available in CI, ADR 0005) and fails on plugin load errors.
     needs: [lint]
     runs-on: ubuntu-latest

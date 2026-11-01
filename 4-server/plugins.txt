@@ -26,5 +26,11 @@ datapack:terralith:CzijfXJQ
 betonquest:Sfp4oOVr
 mythicmobs:ionz4v5c
 
+# Character progression and roleplay (AuraSkills mana feeds the HeldengildeParty spell bridge, ADR 0008).
+# Emotecraft only publishes beta Paper builds for 26.2. Players need the Emotecraft client mod to play emotes (packwiz pack, ADR 0006).
+auraskills:9rSJ3THD
+gsit:gnY5Flgo
+emotecraft:D5rY4opZ
+
 # Admin tools
 bluemap:uHQIrUdf
