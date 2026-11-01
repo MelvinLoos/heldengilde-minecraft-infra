@@ -1,0 +1,18 @@
+#!/bin/sh
+# Managed by Ansible (host_bootstrap). Restricts what the internet can reach through
+# Docker-published ports. Traffic NOT entering via the WAN interface (bridges, lo, tunnels) is untouched.
+set -eu
+WAN="{{ host_wan_if }}"
+[ -n "$WAN" ] || { echo "no WAN interface detected, skipping" >&2; exit 0; }
+
+iptables -N DOCKER-USER 2>/dev/null || true
+iptables -F DOCKER-USER
+iptables -A DOCKER-USER -m conntrack --ctstate RELATED,ESTABLISHED -j RETURN
+{% for port in host_open_tcp %}
+iptables -A DOCKER-USER -i "$WAN" -p tcp -m conntrack --ctorigdstport {{ port }} -j RETURN
+{% endfor %}
+{% for port in host_open_udp %}
+iptables -A DOCKER-USER -i "$WAN" -p udp -m conntrack --ctorigdstport {{ port }} -j RETURN
+{% endfor %}
+iptables -A DOCKER-USER -i "$WAN" -j DROP
+iptables -A DOCKER-USER -j RETURN

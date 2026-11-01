@@ -1,0 +1,17 @@
+---
+# Local test target: the systemd Ubuntu 24.04 container from local/target/up.sh.
+all:
+  children:
+    minecraft_hosts:
+      hosts:
+        hg-target:
+          ansible_host: 127.0.0.1
+          ansible_port: 2222
+          ansible_user: root
+          ansible_ssh_private_key_file: "{{ lookup('env', 'HG_ROOT') | default(lookup('env', 'HOME') ~ '/hg-local', true) }}/target-key"
+          ansible_ssh_common_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+      vars:
+        host_ingress: [direct]
+        host_admin_authorized_keys:
+          - "{{ lookup('file', (lookup('env', 'HG_ROOT') | default(lookup('env', 'HOME') ~ '/hg-local', true)) ~ '/target-key.pub') }}"
+        host_ssh_harden: false  # the test host is reached as root; production hardens

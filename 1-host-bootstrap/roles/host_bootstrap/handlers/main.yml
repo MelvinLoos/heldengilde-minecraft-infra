@@ -1,0 +1,45 @@
+---
+- name: Restart sshd
+  ansible.builtin.service:
+    name: ssh
+    state: restarted
+
+- name: Restart docker
+  ansible.builtin.service:
+    name: docker
+    state: restarted
+
+- name: Restart fail2ban
+  ansible.builtin.service:
+    name: fail2ban
+    state: restarted
+
+- name: Apply sysctl
+  ansible.builtin.command: sysctl --system
+  changed_when: true
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Apply DOCKER-USER rules
+  ansible.builtin.systemd:
+    name: hg-docker-user-firewall.service
+    state: restarted
+    enabled: true
+
+- name: Restart cloudflared
+  ansible.builtin.service:
+    name: cloudflared
+    state: restarted
+
+- name: Restart playit
+  ansible.builtin.service:
+    name: playit
+    state: restarted
+
+- name: Restart wings if configured
+  ansible.builtin.systemd:
+    name: wings
+    state: restarted
+  when: wings_config.stat.exists | default(false)

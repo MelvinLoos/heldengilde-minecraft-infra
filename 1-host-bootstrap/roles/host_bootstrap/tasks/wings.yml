@@ -1,0 +1,54 @@
+---
+# Installs only the binary and unit. The node config (/etc/pelican/config.yml) comes from the
+# Panel in 3-ansible; the unit refuses to start until it exists.
+- name: Check for node config
+  ansible.builtin.stat:
+    path: /etc/pelican/config.yml
+  register: wings_config
+
+- name: Download Wings (checksum-verified)
+  ansible.builtin.get_url:
+    url: "https://github.com/pelican/wings/releases/download/{{ host_wings_version }}/wings_linux_{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }}"
+    dest: /usr/local/bin/wings
+    checksum: "sha256:{{ host_wings_sha256[ansible_architecture] }}"
+    mode: "0755"
+  notify: Restart wings if configured
+
+- name: Pelican directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop: [/etc/pelican, /var/lib/pelican, /var/log/pelican, /srv/heldengilde]
+
+- name: Wings systemd unit
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/wings.service
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Pelican Wings
+      After=docker.service
+      Requires=docker.service
+      PartOf=docker.service
+      ConditionPathExists=/etc/pelican/config.yml
+
+      [Service]
+      User=root
+      WorkingDirectory=/etc/pelican
+      LimitNOFILE=4096
+      ExecStart=/usr/local/bin/wings
+      Restart=on-failure
+      StartLimitInterval=180
+      StartLimitBurst=30
+      RestartSec=5s
+
+      [Install]
+      WantedBy=multi-user.target
+  notify: Reload systemd
+
+- name: Enable Wings (starts once the node config exists)
+  ansible.builtin.systemd:
+    name: wings
+    enabled: true
+    daemon_reload: true

@@ -1,0 +1,39 @@
+---
+- name: Check supported platform
+  ansible.builtin.assert:
+    that:
+      - ansible_distribution == "Ubuntu"
+      - ansible_distribution_version is version("24.04", ">=")
+      - ansible_architecture in ["x86_64", "aarch64"]
+    fail_msg: "Ubuntu 24.04+ on x86_64 or arm64 required, got {{ ansible_distribution }} {{ ansible_distribution_version }} {{ ansible_architecture }}"
+
+- name: Check ingress profile
+  ansible.builtin.assert:
+    that:
+      - host_ingress is iterable and host_ingress is not string
+      - host_ingress | difference(["direct", "cloudflared", "playit"]) | length == 0
+      - "'cloudflared' not in host_ingress or host_cloudflared_token | length > 0"
+      - "'playit' not in host_ingress or host_playit_secret | length > 0"
+    fail_msg: "host_ingress is a list of direct/cloudflared/playit, and a tunnel needs its token/secret"
+
+- name: Hardening
+  ansible.builtin.import_tasks: hardening.yml
+  tags: [hardening]
+
+- name: Firewall
+  ansible.builtin.import_tasks: firewall.yml
+  tags: [firewall]
+
+- name: Docker
+  ansible.builtin.import_tasks: docker.yml
+  when: host_docker_install
+  tags: [docker]
+
+- name: Wings
+  ansible.builtin.import_tasks: wings.yml
+  when: host_wings_install
+  tags: [wings]
+
+- name: Ingress agents
+  ansible.builtin.import_tasks: ingress.yml
+  tags: [ingress]

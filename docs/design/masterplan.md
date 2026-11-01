@@ -1,4 +1,4 @@
-> **Superseded in part.** This is the original design document. Known faults and the corrected decisions are in [ADR 0001](../adr/0001-evaluation.md) to [ADR 0006](../adr/0006-client-mods-packwiz.md). The repo name `heldengilde-infra` is now `heldengilde-minecraft-infra`.
+> **Superseded in part.** This is the original design document. Known faults and the corrected decisions are in [ADR 0001](../adr/0001-evaluation.md) to [ADR 0006](../adr/0006-client-mods-packwiz.md); the OCI hosting layers are replaced by [ADR 0007](../adr/0007-provider-agnostic-ubuntu-hosts.md). The repo name `heldengilde-infra` is now `heldengilde-minecraft-infra`.
 
 # Masterplan: De Heldengilde Minecraft Server
 

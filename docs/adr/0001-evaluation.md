@@ -79,6 +79,8 @@ The masterplan (`docs/design/masterplan.md`) and implementation bundle #1 (`docs
 
 ## F. Masterplan infra (layers 1–3)
 
+> OCI was dropped afterwards ([ADR 0007](0007-provider-agnostic-ubuntu-hosts.md)). F1 and F2 are historical; F3–F5 still apply to any host.
+
 - **F1.** The OCI Always Free 200 GB total includes the boot volume.
 - **F2.** Idle Always Free instances get reclaimed. Upgrade to Pay-As-You-Go, and plan for A1 out-of-capacity retries.
 - **F3.** The browser opens the console websocket directly to Wings, so Wings needs TLS (via Caddy). Public `:8080` over plain HTTP won't work.

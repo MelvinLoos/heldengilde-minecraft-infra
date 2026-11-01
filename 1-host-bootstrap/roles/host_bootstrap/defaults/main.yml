@@ -1,0 +1,58 @@
+---
+# --- Access -----------------------------------------------------------------
+# Public keys for the admin user. Required when host_ssh_harden is true (lock-out guard).
+host_admin_user: hgadmin
+host_admin_authorized_keys: []
+host_ssh_port: 22
+host_ssh_harden: true
+
+# --- Hardening --------------------------------------------------------------
+host_unattended_reboot: false
+host_fail2ban: true
+host_timezone: Europe/Amsterdam
+
+# --- Firewall ---------------------------------------------------------------
+# List of profiles:
+#   direct:      host has a public IP; open Panel/Wings HTTPS and the game ports.
+#   cloudflared: Cloudflare Tunnel for HTTPS only (outbound connection, no inbound ports).
+#   playit:      Playit.gg agent for the game ports (outbound only).
+# Home PC example: [cloudflared, playit]. Cloud VM example: [direct].
+host_ingress: [direct]
+host_https_ports: [80, 443]
+host_game_tcp_ports: [25565]
+host_game_udp_ports: [24454, 19132]
+# Interface Docker traffic enters on from the internet. Empty = ansible_default_ipv4.interface.
+host_wan_interface: ""
+# Extra source CIDRs allowed to reach SSH only (empty = anywhere).
+host_ssh_allow_from: []
+
+# --- Docker -----------------------------------------------------------------
+host_docker_install: true
+host_docker_daemon_config:
+  log-driver: json-file
+  log-opts:
+    max-size: 20m
+    max-file: "3"
+
+# --- Pelican Wings ----------------------------------------------------------
+# Pinned release; sha256 from the release's per-asset digest.
+host_wings_install: true
+host_wings_version: v1.0.0-beta29
+host_wings_sha256:
+  x86_64: 75d81ecf25366ed3c05ad6c6ccbad532ed896b8219aa9d2c93a5af003d69000b
+  aarch64: 5d7ab434675b862d70647bce11eb6092b032d0af5505a97e8a4f2421339a820c
+
+# --- Ingress agents ---------------------------------------------------------
+host_cloudflared_version: "2026.10.7"
+host_cloudflared_sha256:
+  x86_64: 70b1a1e0f46033ffc8d90b406e554044ba6cbf2e4360295ef1163aed31e09393
+  aarch64: d9407eb6e70ac31f54978a6b408a0320b51b664a6d0b498248692d7ac56bf836
+# Tunnel token from the Cloudflare dashboard; keep it in the SOPS-encrypted vars.
+host_cloudflared_token: ""
+
+host_playit_version: v1.2.0
+host_playit_sha256:
+  x86_64: 602dea3288d5bad4c3addba70ecf6535b9ae085b8d4f2fc2fe9cde913bda78d0
+  aarch64: 3a6d69c348803c7041c49312345c18b1e9cb7dd7fc2adfbf2217e50d0d7c9a34
+# Agent secret from the Playit.gg dashboard; keep it in the SOPS-encrypted vars.
+host_playit_secret: ""

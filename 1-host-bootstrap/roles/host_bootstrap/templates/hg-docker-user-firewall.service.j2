@@ -1,0 +1,13 @@
+[Unit]
+Description=Heldengilde DOCKER-USER firewall rules
+After=docker.service network-online.target
+Requires=docker.service
+PartOf=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStart=/usr/local/sbin/hg-docker-user-firewall
+
+[Install]
+WantedBy=multi-user.target

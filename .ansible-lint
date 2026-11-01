@@ -1,0 +1,10 @@
+---
+# Role variables use the short `host_` / `hg_` prefixes on purpose (they are inventory-facing).
+skip_list:
+  - var-naming[no-role-prefix]
+exclude_paths:
+  - .github/
+  - local/
+  - 4-server/egg.yaml
+  - 4-server/config/
+  - 4-server/env/

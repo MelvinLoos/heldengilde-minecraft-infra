@@ -1,0 +1,61 @@
+---
+# Docker publishes ports through iptables NAT and bypasses ufw, so there are two layers:
+#  - ufw guards the host itself (INPUT);
+#  - the DOCKER-USER chain guards published container ports (FORWARD), matching the
+#    ORIGINAL destination port because DNAT has already rewritten the destination.
+- name: Compute public ports for the ingress profiles
+  ansible.builtin.set_fact:
+    host_open_tcp: "{{ (host_https_ports + host_game_tcp_ports) if 'direct' in host_ingress else [] }}"
+    host_open_udp: "{{ host_game_udp_ports if 'direct' in host_ingress else [] }}"
+    host_wan_if: "{{ host_wan_interface or ansible_default_ipv4.interface | default('') }}"
+
+- name: UFW default policies
+  community.general.ufw:
+    default: "{{ item.default }}"
+    direction: "{{ item.direction }}"
+  loop:
+    - {direction: incoming, default: deny}
+    - {direction: outgoing, default: allow}
+    - {direction: routed, default: deny}
+
+- name: UFW allow SSH
+  community.general.ufw:
+    rule: limit
+    port: "{{ host_ssh_port }}"
+    proto: tcp
+    from_ip: "{{ item }}"
+  loop: "{{ host_ssh_allow_from if host_ssh_allow_from | length > 0 else ['any'] }}"
+
+- name: UFW allow public TCP ports
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop: "{{ host_open_tcp }}"
+
+- name: UFW allow public UDP ports
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: udp
+  loop: "{{ host_open_udp }}"
+
+- name: Enable UFW
+  community.general.ufw:
+    state: enabled
+
+- name: Install DOCKER-USER rules script
+  ansible.builtin.template:
+    src: hg-docker-user-firewall.sh.j2
+    dest: /usr/local/sbin/hg-docker-user-firewall
+    mode: "0750"
+  notify: Apply DOCKER-USER rules
+
+- name: Install DOCKER-USER rules unit
+  ansible.builtin.template:
+    src: hg-docker-user-firewall.service.j2
+    dest: /etc/systemd/system/hg-docker-user-firewall.service
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Apply DOCKER-USER rules

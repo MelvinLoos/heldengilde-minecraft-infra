@@ -1,0 +1,98 @@
+---
+# Tunnel agents make outbound connections only, so no inbound firewall ports are needed.
+- name: Install cloudflared
+  when: "'cloudflared' in host_ingress"
+  block:
+    - name: Download cloudflared package (checksum-verified)
+      ansible.builtin.get_url:
+        url: "https://github.com/cloudflare/cloudflared/releases/download/{{ host_cloudflared_version }}/cloudflared-linux-{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }}.deb"
+        dest: /var/cache/cloudflared.deb
+        checksum: "sha256:{{ host_cloudflared_sha256[ansible_architecture] }}"
+        mode: "0644"
+
+    - name: Install cloudflared
+      ansible.builtin.apt:
+        deb: /var/cache/cloudflared.deb
+
+    - name: Tunnel token file
+      ansible.builtin.copy:
+        dest: /etc/cloudflared-token
+        content: "{{ host_cloudflared_token }}"
+        mode: "0600"
+      no_log: true
+      notify: Restart cloudflared
+
+    - name: Install cloudflared unit
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/cloudflared.service
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Cloudflare Tunnel (Panel and Wings HTTPS)
+          After=network-online.target
+          Wants=network-online.target
+
+          [Service]
+          ExecStart=/usr/bin/cloudflared --no-autoupdate tunnel run --token-file /etc/cloudflared-token
+          Restart=always
+          RestartSec=5s
+
+          [Install]
+          WantedBy=multi-user.target
+      notify:
+        - Reload systemd
+        - Restart cloudflared
+
+    - name: Enable cloudflared
+      ansible.builtin.systemd:
+        name: cloudflared
+        enabled: true
+        state: started
+        daemon_reload: true
+
+- name: Install Playit.gg agent
+  when: "'playit' in host_ingress"
+  block:
+    - name: Download playit agent (checksum-verified)
+      ansible.builtin.get_url:
+        url: "https://github.com/playit-cloud/playit-agent/releases/download/{{ host_playit_version }}/playit-linux-{{ 'amd64' if ansible_architecture == 'x86_64' else 'aarch64' }}"
+        dest: /usr/local/bin/playit
+        checksum: "sha256:{{ host_playit_sha256[ansible_architecture] }}"
+        mode: "0755"
+      notify: Restart playit
+
+    - name: Playit secret file
+      ansible.builtin.copy:
+        dest: /etc/playit-secret
+        content: "{{ host_playit_secret }}"
+        mode: "0600"
+      no_log: true
+      notify: Restart playit
+
+    - name: Install playit unit
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/playit.service
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Playit.gg tunnel agent (Minecraft game ports)
+          After=network-online.target
+          Wants=network-online.target
+
+          [Service]
+          ExecStart=/usr/local/bin/playit --secret-path /etc/playit-secret
+          Restart=always
+          RestartSec=5s
+
+          [Install]
+          WantedBy=multi-user.target
+      notify:
+        - Reload systemd
+        - Restart playit
+
+    - name: Enable playit
+      ansible.builtin.systemd:
+        name: playit
+        enabled: true
+        state: started
+        daemon_reload: true

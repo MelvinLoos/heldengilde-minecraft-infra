@@ -1,0 +1,7 @@
+---
+# Takes a fresh Ubuntu 24.04 LTS host (x86_64 or arm64) from "reachable over SSH" to
+# "ready for Pelican": hardened, firewalled, Docker + Wings installed (ADR 0007).
+- name: Bootstrap host
+  hosts: minecraft_hosts
+  roles:
+    - host_bootstrap
