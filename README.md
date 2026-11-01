@@ -13,7 +13,7 @@ Quest and NPC content lives in the separate `heldengilde-minecraft-content` repo
 | `scripts/` | Host-agnostic scripts shared by laptop and server: `panel-init`, `provision-server`, `backup-host`, `backup-panel`, `panel-state`, `migrate-state` |
 | `4-server/` | Server definition: plugins, jar lock, config, generated egg |
 | `agent/` | `hg-gitops` host agent (systemd timers) and the jar fetcher |
-| `local/` | Laptop Pelican + Wings (+ MinIO) stack, spike tests, and `target/` (a systemd Ubuntu 24.04 container to test the Ansible roles) |
+| `local/` | Laptop Pelican + Wings (+ SeaweedFS S3) stack, spike tests, and `target/` (a systemd Ubuntu 24.04 container to test the Ansible roles) |
 | `.github/workflows/` | CI: lint, egg-in-sync check, secret scan, boot test |
 | `docs/adr/` | Architecture decisions (start with 0001) |
 | `docs/runbooks/` | Laptop-to-server migration, backups and restores |
