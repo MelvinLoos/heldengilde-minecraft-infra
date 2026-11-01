@@ -5,3 +5,4 @@ useDefault = true
 [allowlist]
 description = "Dummy fixture value in local/spike-test.sh and local/spike/egg-itzg.yaml"
 regexes = ['''s3cret-from-env''']
+paths = ['''3-ansible/inventory/secrets\.sops\.yml\.example''']
