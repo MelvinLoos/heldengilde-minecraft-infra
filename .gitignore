@@ -1,0 +1,8 @@
+*.jar
+local/data/
+.env
+.env.*
+*.decrypted.*
+*.tfstate
+*.tfstate.*
+.terraform/
