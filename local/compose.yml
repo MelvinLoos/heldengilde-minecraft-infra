@@ -1,0 +1,45 @@
+# Local Pelican Panel + Wings for the Phase 1 runtime spike (ADR 0002).
+# HG_ROOT must be an absolute path and is mounted at the SAME path inside Wings:
+# Wings hands host paths to Docker for server bind mounts, so they must match.
+name: hg-local
+
+services:
+  panel:
+    image: ghcr.io/pelican/panel:v1.0.0-beta38
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8081:80"
+    environment:
+      APP_URL: "http://panel"
+      APP_ENV: production
+      APP_DEBUG: "false"
+      XDG_DATA_HOME: /pelican-data
+      MAIL_DRIVER: log
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /pelican-data/database/database.sqlite
+    volumes:
+      - panel-data:/pelican-data
+      - panel-logs:/var/www/html/storage/logs
+
+  wings:
+    image: ghcr.io/pelican/wings:v1.0.0-beta29
+    restart: unless-stopped
+    profiles: [wings]
+    ports:
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:2022:2022"
+      - "127.0.0.1:25565:25565"
+    environment:
+      TZ: UTC
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${HG_ROOT:?set HG_ROOT}/etc:/etc/pelican
+      - ${HG_ROOT}/lib:${HG_ROOT}/lib
+      - ${HG_ROOT}/tmp:${HG_ROOT}/tmp
+      - ${HG_ROOT}/log:${HG_ROOT}/log
+      - ${HG_ROOT}/gitops:${HG_ROOT}/gitops
+      - ${HG_ROOT}/custom-jars:${HG_ROOT}/custom-jars
+
+volumes:
+  panel-data:
+  panel-logs:
