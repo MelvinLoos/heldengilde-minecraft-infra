@@ -12,6 +12,6 @@ Rev. 3 drops OCI ([ADR 0007](adr/0007-provider-agnostic-ubuntu-hosts.md)). Build
 | 6 | `3-ansible/`: Panel stack (Caddy, DB), Wings node, API bootstrap, jar fetch, agent, backups | done | ansible-lint, syntax-check, template render, container run |
 | 7 | `agent/`: `hg-gitops` (`sync-infra`, `sync-custom-jars`, `deploy-content`, `snapshot-server-content`) | done | end-to-end against the local stack |
 | 8 | S3-compatible backups (SeaweedFS locally), restore runbook, `scripts/migrate-state.sh` | done | backup to MinIO, export/import round trip |
-| 9 | Content repo scaffold (`heldengilde-minecraft-content`), `heldengilde-ttrpg` MCP server, AuraSkills/GSit/Emotecraft pins, no MythicCrucible ([ADR 0008](adr/0008-no-mythiccrucible-spell-bridge.md)) | in progress | `local/lint.sh`, `local/boot-test.sh`, `local/agent-e2e.sh` |
+| 9 | Content repo scaffold (`heldengilde-minecraft-content`), `heldengilde-ttrpg` MCP server, AuraSkills/GSit/Emotecraft pins, spell bridge ([ADR 0008](adr/0008-spell-bridge-via-heldengildeparty.md)) | in progress | `local/lint.sh`, `local/boot-test.sh`, `local/agent-e2e.sh` |
 
 Deferred: Discord quest bot, `HeldengildeParty` plugin, client packwiz pipeline, Gilde-Atlas, metrics exporter, arm64 verification, CI run on GitHub (no remote yet).

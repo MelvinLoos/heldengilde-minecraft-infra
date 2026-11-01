@@ -1,6 +1,6 @@
 # Implementatiebundel #2: AI, MCP Server & TTRPG Content Pipeline
 
-**Doelstelling:** Een AI-gestuurde content-pipeline waarmee we het eigen **Heldengilde TTRPG-systeem** (klassen, magie, lore, puzzels en normen/waarden) naadloos vertalen naar **100% MythicMobs-compatibele** configuraties (`MythicMobs`, `MythicCrucible`, `MythicDungeons 2.1.0` en `BetonQuest`).
+**Doelstelling:** Een AI-gestuurde content-pipeline waarmee we het eigen **Heldengilde TTRPG-systeem** (klassen, magie, lore, puzzels en normen/waarden) naadloos vertalen naar **100% MythicMobs-compatibele** configuraties (`MythicMobs`, `MythicDungeons 2.1.0` en `BetonQuest`).
 
 ---
 
@@ -9,7 +9,7 @@
 Omdat we willen dat magie, karakters, monsters én dungeon-puzzels naadloos met elkaar praten, standaardiseren we op het **MythicCraft ecosysteem** aangevuld met `BetonQuest` en `AuraSkills`:
 
 * **`MythicMobs` (De Centrale Skill Engine):** Elke spreuk, klasse-vaardigheid, puzzeleffect en eindbaas-actie in jullie TTRPG wordt geschreven als een *MythicMobs Skill* (`Skills/*.yml`).
-* **`MythicCrucible` (Spreukenboeken, Staven & TTRPG Relieken):** Zorgt dat spelers items (zoals een Toverstaf of Grimoire uit jullie TTRPG) kunnen vasthouden en met rechtermuisknop (`~onUse`) of toetscombinaties (`~onSwing`, `~onCrouch`) direct een `MythicMobs` skill afvuren.
+* **`HeldengildeParty` (Spreukenboeken, Staven & TTRPG Relieken):** Onze eigen plugin laat spelers items (zoals een Toverstaf of Grimoire uit jullie TTRPG) vasthouden en met rechtermuisknop een `MythicMobs` skill afvuren, na een mana-check via `AuraSkills` (zie ADR 0008).
 * **`MythicDungeons 2.1.0` (Puzzel-Interactie):** Deuren, kristallen en *Push-Blocks* in dungeons kunnen reageren op specifieke `MythicMobs` skills of variabelen (bijv. een deur die alleen opengaat als een speler een specifieke spreuk uit jullie TTRPG op een runensteen cast).
 * **`BetonQuest` (Verhaal & Theory of Mind):** Heeft native integratie met `MythicMobs` en `MythicDungeons` (kan spreuken/items geven, dungeons starten en controleren welke keuzes een groep heeft gemaakt).
 
@@ -35,7 +35,7 @@ Elke quest, spreuk, NPC en dungeon die je genereert MOET voldoen aan het Pedagog
 ## 2. Heldengilde TTRPG Systeem-Koppeling
 Lees de TTRPG-brondocumenten in `docs/ttrpg-source/` voor:
 - De Klassen / Archetypes en hun kernkwaliteiten.
-- Het Magie- & Vaardighedensysteem (vertaal elke spreuk naar een `MythicCrucible` item in `MythicMobs/Items/` + een skill in `MythicMobs/Skills/`).
+- Het Magie- & Vaardighedensysteem (vertaal elke spreuk naar een item met `HgSpell`-tags in `MythicMobs/Items/` + een skill in `MythicMobs/Skills/`).
 - De Wereld-lore, Steden (gekoppeld aan onze Azgaar/WorldPainter kaart) en Factions.
 
 ## 3. Technische Architectuur & Single-Writer Paden
@@ -45,7 +45,7 @@ Schrijf uitsluitend naar de volgende mappen in deze repository:
   - `conversations/<npc>.yml` (Vertakkende dialogen met heldere keuzes)
 - `MythicMobs/Mobs/<categorie>.yml` (Monsters, puzzelelementen, interactieve kristallen)
 - `MythicMobs/Skills/<categorie>.yml` (Spreuken, baas-mechanieken en puzzel-triggers)
-- `MythicMobs/Items/<categorie>.yml` (TTRPG Toverboeken, Staven, Relieken met `MythicCrucible` triggers zoals `~onUse` of `~onSwing`)
+- `MythicMobs/Items/<categorie>.yml` (TTRPG Toverboeken, Staven, Relieken met `HgSpell`/`HgManaCost`-tags)
 
 *Raak `server-owned/` (Citizens & MythicDungeons snapshots) NOOIT handmatig aan tenzij expliciet gevraagd om een dungeon-trigger te koppelen.*
 
