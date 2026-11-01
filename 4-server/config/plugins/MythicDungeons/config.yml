@@ -1,6 +1,8 @@
 # Heldengilde: full file owned by Git (Zone 1). Generated from MythicDungeons 2.1.0 defaults, then:
 #   Experimental.OneWorldDungeons: true   (one shared dungeon world, less I/O)
 #   Spectator.UseLegacy: false            (needs packetevents)
+#   OneWorldDungeonsWorld.Gamerule: keepInventory true, mobGriefing false, fixed time/weather (De Veilige Cirkel).
+#     Keep the camelCase keys: MD maps them to the 26.x snake_case rules and reads doDaylightCycle/doWeatherCycle itself.
 # itzg patches skip files that do not exist yet, so a fresh server would miss these. Diff against new defaults on upgrade.
 General:
   # The language file to load from the lang/ folder (without the .yml extension).
@@ -70,10 +72,10 @@ Experimental:
     # CLEAR or DOWNFALL. Only fixed when doWeatherCycle is false.
     WorldWeather: CLEAR
     Gamerule:
-      keepInventory: false
-      doDaylightCycle: true
-      doWeatherCycle: true
-      mobGriefing: true
+      keepInventory: true
+      doDaylightCycle: false
+      doWeatherCycle: false
+      mobGriefing: false
       randomTickSpeed: 0
 Spectator:
   # Whether to use the legacy spectator system, modern one requires packetevents.

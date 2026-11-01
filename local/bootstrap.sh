@@ -9,55 +9,18 @@ ADMIN_EMAIL="${ADMIN_EMAIL:-admin@heldengilde.local}"
 ADMIN_PASS="${ADMIN_PASS:-$(cat "$HG_ROOT/admin-password" 2>/dev/null || openssl rand -hex 12)}"
 
 mkdir -p "$HG_ROOT"/{etc,lib,tmp,log,gitops,custom-jars,config}
-echo "$ADMIN_PASS" > "$HG_ROOT/admin-password"; chmod 600 "$HG_ROOT/admin-password"
-
-panel() { docker compose exec -T -u www-data panel "$@"; }
-artisan() { panel php artisan "$@"; }
+(umask 077; echo "$ADMIN_PASS" > "$HG_ROOT/admin-password")  # panel-init.sh reads it
 
 docker compose up -d panel
-echo "waiting for panel..."
-for _ in $(seq 60); do
-  curl -fs -o /dev/null -H 'Host: panel' http://127.0.0.1:8081/ && break
-  sleep 2
-done
 
-# Headless equivalent of the web installer: create the SQLite DB, migrate, mark installed.
-if ! artisan migrate:status >/dev/null 2>&1; then
-  panel touch /pelican-data/database/database.sqlite
-  artisan migrate --seed --force
-fi
-panel sed -i 's/^APP_INSTALLED=false/APP_INSTALLED=true/' /pelican-data/.env
-
-if ! artisan p:user:make --email="$ADMIN_EMAIL" --username=admin --password="$ADMIN_PASS" --admin=1 --silent 2>/dev/null; then
-  echo "admin user probably exists already"
-fi
-
-if ! artisan p:node:list 2>/dev/null | grep -q hg-local; then
-  artisan p:node:make --name=hg-local --description="local spike" --locationId=1 \
-    --fqdn=wings --public=1 --scheme=http --proxy=0 --maintenance=0 \
-    --maxMemory="${NODE_MEM_MB:-49152}" --overallocateMemory=0 --maxDisk="${NODE_DISK_MB:-102400}" --overallocateDisk=0 \
-    --maxCpu=0 --overallocateCpu=0 --uploadSize=100 \
-    --daemonListeningPort=8080 --daemonConnectingPort=8080 --daemonSFTPPort=2022 \
-    --daemonBase="$HG_ROOT/lib/volumes" --silent
-fi
-
-artisan p:node:configuration 1 --format=yaml > "$HG_ROOT/etc/config.yml"
+# Schema, admin, node, API keys and the Wings config: shared with the server (Ansible pelican_panel).
+COMPOSE_FILE="$PWD/compose.yml" STATE_DIR="$HG_ROOT" ADMIN_EMAIL="$ADMIN_EMAIL" \
+  NODE_NAME=hg-local NODE_FQDN=wings NODE_SCHEME=http NODE_BEHIND_PROXY=0 NODE_PORT=8080 \
+  NODE_MEM_MB="${NODE_MEM_MB:-49152}" NODE_DISK_MB="${NODE_DISK_MB:-102400}" \
+  VOLUMES_DIR="$HG_ROOT/lib/volumes" PANEL_DB=sqlite \
+  ../scripts/panel-init.sh
+cp "$HG_ROOT/wings-config.yml" "$HG_ROOT/etc/config.yml"
 echo "wrote $HG_ROOT/etc/config.yml"
-
-# API keys for the spike scripts (application + client), created once.
-if [ ! -s "$HG_ROOT/app-key" ] || [ ! -s "$HG_ROOT/client-key" ]; then
-  umask 077
-  # shellcheck disable=SC2016 # the $ signs are PHP, not shell
-  raw="$(artisan tinker --execute='
-    $u = App\Models\User::where("username", "admin")->first();
-    $svc = app(App\Services\Api\KeyCreationService::class);
-    $perms = array_fill_keys(App\Models\ApiKey::getPermissionList(), 3);
-    $app = $svc->setKeyType(App\Models\ApiKey::TYPE_APPLICATION)->handle(["user_id" => $u->id, "memo" => "spike-app", "allowed_ips" => [], "permissions" => $perms]);
-    $cli = $svc->setKeyType(App\Models\ApiKey::TYPE_ACCOUNT)->handle(["user_id" => $u->id, "memo" => "spike-client", "allowed_ips" => []]);
-    echo "APP=" . $app->identifier . $app->token . "\nCLI=" . $cli->identifier . $cli->token . "\n";')"
-  sed -n 's/^.*APP=//p' <<<"$raw" > "$HG_ROOT/app-key"
-  sed -n 's/^.*CLI=//p' <<<"$raw" > "$HG_ROOT/client-key"
-fi
 
 # Wings runs in a container: use HG_ROOT-based paths (identical on host and in Wings),
 # reach the panel over the compose network, and allow the spike's mount sources.

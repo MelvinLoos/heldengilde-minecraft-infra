@@ -25,6 +25,10 @@ check "jar lock is well formed"   jq -e '
     (.sha256 | test("^[0-9a-f]{64}$")) and
     (.source | test("^https://") or test("^local:[A-Za-z0-9._-]+\\.jar$")))' 4-server/custom-jars.lock.json
 check "plugin pins are versioned" bash -c '! grep -vE "^(#|$)" 4-server/plugins.txt 4-server/plugins-26.3.txt | grep -vE ":[A-Za-z0-9]{8}$"'
+# shellcheck disable=SC2016 # single quotes are intentional: the inner bash expands
+check "dungeon safety gamerules" bash -c 'f=4-server/config/plugins/MythicDungeons/config.yml; grep -q "keepInventory: true" $f && grep -q "mobGriefing: false" $f && grep -q "doDaylightCycle: false" $f && grep -q "doWeatherCycle: false" $f'
+# shellcheck disable=SC2016
+check "CFG_ placeholders are egg variables" bash -c 'for v in $(grep -rhoE "\$\{CFG_[A-Z0-9_]+\}" 4-server/config | sort -u | tr -d "\${}"); do grep -q "env_variable: $v\$" 4-server/egg.yaml || { echo "missing $v"; exit 1; }; done'
 check "env has no secrets"        bash -c '! grep -E "^CFG_|TOKEN|PASSWORD|SECRET" 4-server/env/server.env'
 
 echo "failures: $fails"

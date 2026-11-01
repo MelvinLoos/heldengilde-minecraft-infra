@@ -8,7 +8,7 @@ Oracle Cloud account reliability is a blocker (F2: reclaimed instances, out-of-c
 
 ## Decision
 
-1. **No cloud-specific IaC.** `1-terraform/` and `2-cloud-init/` are not built. Provisioning the machine itself (VM, DNS) is out of scope; the repo starts at "a fresh Ubuntu 24.04 host reachable over SSH".
+1. **No cloud-specific IaC.** `1-terraform/` and `2-cloud-init/` are not built; the placeholder directories were removed. Provisioning the machine itself (VM, DNS) is out of scope; the repo starts at "a fresh Ubuntu 24.04 host reachable over SSH".
 2. **`1-host-bootstrap/`** is an Ansible role (`host_bootstrap`) that takes such a host and applies: SSH/OS hardening, unattended-upgrades, `ufw` plus `DOCKER-USER` rules, Docker Engine, the pinned Pelican Wings binary (sha256-verified, per architecture), and an optional ingress profile.
 3. **Ingress profiles** (`host_ingress`): `direct` (public IP, ports opened), `cloudflared` (Cloudflare Tunnel for Panel/Wings HTTPS, no router port-forwarding, no home IP leak) or `playit` (Playit.gg agent for the game ports). Cloudflare Tunnel only carries HTTP(S) on the free plan, so Minecraft TCP/UDP needs Playit.gg (or `direct`); this is documented in the role README.
 4. **`3-ansible/`** deploys the Panel stack (Caddy, DB), the Wings node configuration, the `hg-gitops` agent and backup jobs. The inventory is the only thing that changes between the laptop test target and the real host.

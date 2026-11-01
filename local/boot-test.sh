@@ -20,7 +20,7 @@ docker rm -f "$name" >/dev/null 2>&1 || true
 docker run -d --name "$name" --user "$(id -u):$(id -g)" \
   --env-file "$repo/4-server/env/server.env" \
   -e UID="$(id -u)" -e GID="$(id -g)" -e ONLINE_MODE=FALSE -e MEMORY=3G \
-  -e CFG_DISCORD_BOT_TOKEN=boot-test-token "${extra[@]}" \
+  -e CFG_DISCORD_BOT_TOKEN=boot-test-token -e CFG_DISCORDSRV_REQUIRE_LINK=false "${extra[@]}" \
   -v "$work/data:/data" -v "$repo:/gitops:ro" -v "$work/jars:/plugins:ro" \
   -v "$repo/4-server/config:/config:ro" \
   "$image" >/dev/null
@@ -54,6 +54,29 @@ if [ "$up" = 0 ]; then
     sleep 3
   done
   if [ "$ok" = 0 ]; then echo "PASS RCON_CMDS_STARTUP applied (keep_inventory=true)"; else echo "FAIL RCON_CMDS_STARTUP not applied"; fails=1; fi
+fi
+
+# shellcheck disable=SC2317 # helper functions are called through chk
+if [ "$up" = 0 ]; then
+  docker logs "$name" > "$work/boot.log" 2>&1 || true
+  chk() { # name command...
+    local n=$1; shift
+    if "$@"; then echo "PASS $n"; else echo "FAIL $n"; fails=1; fi
+  }
+  geyser_port() { grep -E '\[Geyser-Spigot\]' "$work/boot.log" | grep -q 19132; }
+  bluemap_up() {
+    for _ in $(seq 30); do
+      docker exec "$name" bash -c 'exec 3<>/dev/tcp/127.0.0.1/8100' 2>/dev/null && return 0
+      sleep 3
+    done
+    return 1
+  }
+  # shellcheck disable=SC2016 # literal ${CFG_ search
+  no_placeholders() { ! grep -rqF '${CFG_' "$work/data/plugins" --include='*.yml' --include='*.conf' --include='*.properties'; }
+  chk "voice chat listens on 24454" grep -q 'Voice chat server started at port 24454' "$work/boot.log"
+  chk "Geyser uses port 19132" geyser_port
+  chk "BlueMap webserver listens on 8100" bluemap_up
+  chk "no unresolved CFG placeholders in plugin configs" no_placeholders
 fi
 
 [ "${1:-}" = "--keep" ] || docker rm -f "$name" >/dev/null 2>&1 || true
