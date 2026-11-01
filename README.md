@@ -24,16 +24,82 @@ Quest and NPC content lives in the separate `heldengilde-minecraft-content` repo
 
 Phases 0-8 are done and verified locally (see [the plan](docs/implementation-plan.md)). Not yet exercised: a real server or home PC, arm64, the GitHub workflow (this repo has no remote), and a real DiscordSRV token.
 
-## Deploy to a host
+## Run it on your laptop
+
+Needs Docker (with the compose plugin) and about 25 GB of free RAM for the server (16 GB heap).
+
+**1. Once: make `panel` and `wings` resolve to your machine.** The Panel and the browser console use those hostnames.
+
+```bash
+echo '127.0.0.1 panel wings' | sudo tee -a /etc/hosts
+```
+
+**2. Start the stack and create the server.**
+
+```bash
+export HG_ROOT=$HOME/hg-local HG_REPO=$PWD
+local/bootstrap.sh                                   # Panel + admin + node + Wings (a few minutes)
+
+# Files the server mounts: the repo, the pinned jars, and the premium MythicDungeons jar
+mkdir -p $HG_ROOT/gitops $HG_ROOT/premium
+cp /path/to/MythicDungeons-2.1.0.jar $HG_ROOT/premium/          # never committed
+rsync -a --delete --exclude .git --exclude '*.jar' ./ $HG_ROOT/gitops/
+HG_PREMIUM_DIR=$HG_ROOT/premium agent/fetch-custom-jars.sh 4-server/custom-jars.lock.json $HG_ROOT/custom-jars
+chmod -R a+rX $HG_ROOT/custom-jars
+
+set -a; . local/stack.env; set +a
+CONFIG_SRC=$HG_ROOT/gitops/4-server/config SERVER_PORT=25565 scripts/provision-server.sh
+```
+
+`bootstrap.sh` and `provision-server.sh` are safe to re-run. Steps 1-2 were verified piecemeal (the Panel and node bootstrap, the provisioning script on a fresh host, the jar fetch), but this exact laptop sequence has not been run from an empty `$HG_ROOT` since the last changes.
+
+**3. Open the Panel and start the server.**
+
+| What | URL / address | Login |
+|---|---|---|
+| **Panel** (start, stop, console, files, backups) | http://panel:8081 | `admin@heldengilde.local`, password in `$HG_ROOT/admin-password` |
+| **Panel admin area** (nodes, eggs, mounts, backup hosts) | http://panel:8081/admin | same |
+| **Minecraft (Java)** | `localhost:25565` (the port you gave `SERVER_PORT`) | Minecraft 1.21.x or newer client (ViaVersion), online-mode account |
+| Wings API | http://wings:8080 | not for browsers; the Panel console connects to it |
+| Local S3 for backups (only after `local/s3.sh`) | http://127.0.0.1:8333 | API only, key `hgs3` |
+
+In the Panel: open the server, press **Start**, and wait for `Done` in the console (about 30 s on later starts; the first start downloads the image and plugins). Then join `localhost:25565` in Minecraft. First start of a world takes longer.
+
+Not wired up yet locally: **Bedrock** (UDP 19132), **voice chat** (UDP 24454) and **BlueMap** (port 8100) need extra Pelican allocations that the provisioning script does not create yet. On a server, BlueMap is published at `https://<hg_bluemap_domain>` behind a password once that allocation exists.
+
+**Day to day**
+
+| I want to... | Do this |
+|---|---|
+| Stop or restart the server | Panel, server, **Stop** / **Restart** (a stop saves the world) |
+| Change server settings or plugins | Edit `4-server/` (see below), copy to `$HG_ROOT/gitops` with the `rsync` line above, **Restart** |
+| Take a backup | Panel, server, **Backups**. Local S3 target: `local/s3.sh` once |
+| Stop everything | `docker compose -f local/compose.yml --profile wings down` (volumes and worlds are kept) |
+| Start everything again | `docker compose -f local/compose.yml --profile wings up -d` |
+| Move this world to a server | [Migration runbook](docs/runbooks/migrate-laptop-to-server.md) |
+
+## Run it on a real server
+
+You need an Ubuntu 24.04 host with SSH access (cloud VM, or a PC at home), a domain with DNS for `panel.<domain>` and `wings.<domain>` pointing at it (home PC with a tunnel: see `1-host-bootstrap/README.md`), and `ansible` on your laptop.
 
 ```bash
 cd 3-ansible
-cp inventory/production.yml.example inventory/production.yml   # edit; secrets via SOPS, see inventory/secrets.sops.yml.example
 ansible-galaxy collection install -r requirements.yml
+cp inventory/production.yml.example inventory/production.yml     # set host, domains, SSH key, S3
 ansible-playbook -i inventory/production.yml site.yml
 ```
 
-Test the same playbook on the laptop with `local/target/up.sh` and `-i inventory/laptop-test.yml`. Moving the world: [migration runbook](docs/runbooks/migrate-laptop-to-server.md).
+| What | URL / address | Login |
+|---|---|---|
+| **Panel** | `https://panel.<domain>` | `hg_admin_email`; password in `/srv/heldengilde/state/admin-password` on the host (change it after first login) |
+| **Wings** (the browser console connects here) | `https://wings.<domain>` | not for browsing |
+| **BlueMap** | `https://<hg_bluemap_domain>` (if set) | user `heldengilde`, password from `hg_bluemap_basicauth_hash` |
+| **Minecraft (Java)** | `<domain>:25565` | |
+| Voice chat / Bedrock | UDP 24454 / UDP 19132 (ports are opened, allocations still to do) | |
+
+The agent then keeps the host in sync every 5 minutes: infra repo changes apply at the next server restart, content-repo changes (quests, mobs) are deployed and reloaded without a restart, and server-owned YAML is snapshotted nightly to the `autosync/server` branch. Check it with `systemctl list-timers 'hg-*'` and `journalctl -u 'hg-gitops@*'` on the host.
+
+To rehearse the exact playbook on your laptop first: `local/target/up.sh`, then `ansible-playbook -i inventory/laptop-test.yml site.yml` (Panel at `http://panel.test` inside that container only), and `local/agent-e2e.sh` to test the agent.
 
 ## Local spike
 

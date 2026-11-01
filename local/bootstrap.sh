@@ -35,7 +35,7 @@ fi
 if ! artisan p:node:list 2>/dev/null | grep -q hg-local; then
   artisan p:node:make --name=hg-local --description="local spike" --locationId=1 \
     --fqdn=wings --public=1 --scheme=http --proxy=0 --maintenance=0 \
-    --maxMemory=8192 --overallocateMemory=0 --maxDisk=20480 --overallocateDisk=0 \
+    --maxMemory="${NODE_MEM_MB:-49152}" --overallocateMemory=0 --maxDisk="${NODE_DISK_MB:-102400}" --overallocateDisk=0 \
     --maxCpu=0 --overallocateCpu=0 --uploadSize=100 \
     --daemonListeningPort=8080 --daemonConnectingPort=8080 --daemonSFTPPort=2022 \
     --daemonBase="$HG_ROOT/lib/volumes" --silent

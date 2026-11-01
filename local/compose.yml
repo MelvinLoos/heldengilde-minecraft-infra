@@ -10,7 +10,10 @@ services:
     ports:
       - "127.0.0.1:8081:80"
     environment:
-      APP_URL: "http://panel"
+      # Browser URL is http://panel:8081 (add "127.0.0.1 panel" to /etc/hosts). BEHIND_PROXY keeps the
+      # in-image Caddy on port 80 inside the container and makes asset links use APP_URL.
+      APP_URL: "http://panel:8081"
+      BEHIND_PROXY: "true"
       APP_ENV: production
       APP_DEBUG: "false"
       XDG_DATA_HOME: /pelican-data
