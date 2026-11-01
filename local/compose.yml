@@ -28,17 +28,18 @@ services:
     ports:
       - "127.0.0.1:8080:8080"
       - "127.0.0.1:2022:2022"
-      - "127.0.0.1:25565:25565"
     environment:
       TZ: UTC
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${HG_ROOT:?set HG_ROOT}/etc:/etc/pelican
+      - ${HG_ROOT}/etc:${HG_ROOT}/etc
       - ${HG_ROOT}/lib:${HG_ROOT}/lib
       - ${HG_ROOT}/tmp:${HG_ROOT}/tmp
       - ${HG_ROOT}/log:${HG_ROOT}/log
       - ${HG_ROOT}/gitops:${HG_ROOT}/gitops
       - ${HG_ROOT}/custom-jars:${HG_ROOT}/custom-jars
+      - ${HG_ROOT}/config:${HG_ROOT}/config
 
 volumes:
   panel-data:

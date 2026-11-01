@@ -19,4 +19,13 @@ Quest and NPC content lives in the separate `heldengilde-minecraft-content` repo
 
 ## Status
 
-Phase 0 (scaffold) done; Phase 1 (itzg-under-Wings runtime spike) next. See ADR 0002.
+Phases 0 (scaffold) and 1 (runtime spike, go) are done. Next: Phase 2 (server definition). See ADR 0002.
+
+## Local spike
+
+```bash
+export HG_ROOT=$HOME/hg-local
+local/bootstrap.sh          # panel + admin + node + Wings
+local/spike/provision.sh    # egg, allocation, server, mounts
+local/spike-test.sh         # PASS/FAIL checks for the runtime
+```

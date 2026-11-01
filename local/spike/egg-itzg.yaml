@@ -1,0 +1,142 @@
+_comment: 'Heldengilde itzg egg (spike). Wings ignores startup; itzg /start is the image entrypoint.'
+meta:
+  version: PLCN_v3
+  update_url: null
+exported_at: '2026-11-01T12:00:00+00:00'
+name: 'Heldengilde Paper (itzg)'
+author: devops@heldengilde.nl
+uuid: 8f9d4c2a-6b3e-4f1a-9c8d-2e5f7a1b3c4d
+description: 'Paper on itzg/minecraft-server. Requires a Pelican Mount to /data (ADR 0002).'
+tags:
+  - minecraft
+  - itzg
+features:
+  - eula
+docker_images:
+  'itzg Java 25': 'itzg/minecraft-server:java25'
+file_denylist: {}
+startup_commands:
+  Default: 'itzg-entrypoint (ignored by Wings; image ENTRYPOINT /start runs)'
+config:
+  files: {}
+  startup:
+    done: ')! For help, type '
+  logs: {}
+  stop: stop
+scripts:
+  installation:
+    script: |-
+      #!/bin/ash
+      mkdir -p /mnt/server
+      echo "nothing to install; itzg handles the server jar at start"
+    container: 'alpine:3.20'
+    entrypoint: ash
+variables:
+  -
+    sort: 1
+    name: 'EULA'
+    description: 'Accept the Minecraft EULA.'
+    env_variable: EULA
+    default_value: 'TRUE'
+    user_viewable: false
+    user_editable: false
+    rules: [required, string]
+  -
+    sort: 2
+    name: 'Server type'
+    description: 'itzg server type.'
+    env_variable: TYPE
+    default_value: PAPER
+    user_viewable: true
+    user_editable: false
+    rules: [required, string]
+  -
+    sort: 3
+    name: 'Minecraft version'
+    description: 'Paper version.'
+    env_variable: VERSION
+    default_value: '26.3'
+    user_viewable: true
+    user_editable: false
+    rules: [required, string, 'max:20']
+  -
+    sort: 4
+    name: 'UID'
+    description: 'Run as this uid (must match Wings container user).'
+    env_variable: UID
+    default_value: '988'
+    user_viewable: false
+    user_editable: false
+    rules: [required, string]
+  -
+    sort: 5
+    name: 'GID'
+    description: 'Run as this gid.'
+    env_variable: GID
+    default_value: '988'
+    user_viewable: false
+    user_editable: false
+    rules: [required, string]
+  -
+    sort: 6
+    name: 'Memory'
+    description: 'JVM heap (about 75-80% of the container limit).'
+    env_variable: MEMORY
+    default_value: 1536M
+    user_viewable: true
+    user_editable: false
+    rules: [required, string]
+  -
+    sort: 7
+    name: 'Online mode'
+    description: 'Offline for the local spike only.'
+    env_variable: ONLINE_MODE
+    default_value: 'FALSE'
+    user_viewable: true
+    user_editable: false
+    rules: [required, string]
+  -
+    sort: 8
+    name: 'Modrinth projects'
+    description: 'itzg MODRINTH_PROJECTS (file reference or list).'
+    env_variable: MODRINTH_PROJECTS
+    default_value: '@/gitops/spike/plugins.txt'
+    user_viewable: true
+    user_editable: false
+    rules: [required, string]
+  -
+    sort: 9
+    name: 'Spike secret'
+    description: 'Interpolation test value for CFG_ replacement.'
+    env_variable: CFG_SPIKE_SECRET
+    default_value: 's3cret-from-env'
+    user_viewable: false
+    user_editable: false
+    rules: [required, string]
+  -
+    sort: 10
+    name: 'Copy config'
+    description: 'Sync /config into /data and interpolate.'
+    env_variable: REPLACE_ENV_DURING_SYNC
+    default_value: 'true'
+    user_viewable: false
+    user_editable: false
+    rules: [required, string]
+  -
+    sort: 11
+    name: 'Config destination'
+    description: 'Sync /config straight into /data instead of /data/config.'
+    env_variable: COPY_CONFIG_DEST
+    default_value: /data
+    user_viewable: false
+    user_editable: false
+    rules: [required, string]
+  -
+    sort: 12
+    name: 'Git config wins'
+    description: 'Overwrite newer files in /data so Git-owned config always wins (Zone 1).'
+    env_variable: SYNC_SKIP_NEWER_IN_DESTINATION
+    default_value: 'false'
+    user_viewable: false
+    user_editable: false
+    rules: [required, string]

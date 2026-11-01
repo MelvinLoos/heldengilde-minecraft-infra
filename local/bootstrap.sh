@@ -8,7 +8,7 @@ export HG_ROOT="${HG_ROOT:-$HOME/hg-local}"
 ADMIN_EMAIL="${ADMIN_EMAIL:-admin@heldengilde.local}"
 ADMIN_PASS="${ADMIN_PASS:-$(cat "$HG_ROOT/admin-password" 2>/dev/null || openssl rand -hex 12)}"
 
-mkdir -p "$HG_ROOT"/{etc,lib,tmp,log,gitops,custom-jars}
+mkdir -p "$HG_ROOT"/{etc,lib,tmp,log,gitops,custom-jars,config}
 echo "$ADMIN_PASS" > "$HG_ROOT/admin-password"; chmod 600 "$HG_ROOT/admin-password"
 
 panel() { docker compose exec -T -u www-data panel "$@"; }
@@ -44,6 +44,21 @@ fi
 artisan p:node:configuration 1 --format=yaml > "$HG_ROOT/etc/config.yml"
 echo "wrote $HG_ROOT/etc/config.yml"
 
+# API keys for the spike scripts (application + client), created once.
+if [ ! -s "$HG_ROOT/app-key" ] || [ ! -s "$HG_ROOT/client-key" ]; then
+  umask 077
+  # shellcheck disable=SC2016 # the $ signs are PHP, not shell
+  raw="$(artisan tinker --execute='
+    $u = App\Models\User::where("username", "admin")->first();
+    $svc = app(App\Services\Api\KeyCreationService::class);
+    $perms = array_fill_keys(App\Models\ApiKey::getPermissionList(), 3);
+    $app = $svc->setKeyType(App\Models\ApiKey::TYPE_APPLICATION)->handle(["user_id" => $u->id, "memo" => "spike-app", "allowed_ips" => [], "permissions" => $perms]);
+    $cli = $svc->setKeyType(App\Models\ApiKey::TYPE_ACCOUNT)->handle(["user_id" => $u->id, "memo" => "spike-client", "allowed_ips" => []]);
+    echo "APP=" . $app->identifier . $app->token . "\nCLI=" . $cli->identifier . $cli->token . "\n";')"
+  sed -n 's/^.*APP=//p' <<<"$raw" > "$HG_ROOT/app-key"
+  sed -n 's/^.*CLI=//p' <<<"$raw" > "$HG_ROOT/client-key"
+fi
+
 # Wings runs in a container: use HG_ROOT-based paths (identical on host and in Wings),
 # reach the panel over the compose network, and allow the spike's mount sources.
 python3 - "$HG_ROOT" <<'PY'
@@ -52,8 +67,9 @@ root = sys.argv[1]
 p = f"{root}/etc/config.yml"
 s = open(p).read()
 s = s.replace("remote: 'http://localhost:8081'", "remote: 'http://panel'")
-s = s.replace("allowed_mounts: []", f"allowed_mounts:\n  - {root}/gitops\n  - {root}/custom-jars\n  - {root}/lib/volumes")
-s = re.sub(r"(system:\n)", rf"\1  root_directory: {root}/lib\n  log_directory: {root}/log\n  tmp_directory: {root}/tmp\n  archive_directory: {root}/lib/archives\n  backup_directory: {root}/lib/backups\n", s, count=1)
+s = s.replace("allowed_mounts: []", f"allowed_mounts:\n  - {root}/gitops\n  - {root}/custom-jars\n  - {root}/config\n  - {root}/lib/volumes")
+s = re.sub(r"(system:\n)", rf"\1  root_directory: {root}/lib\n  log_directory: {root}/log\n  tmp_directory: {root}/tmp\n  archive_directory: {root}/lib/archives\n  backup_directory: {root}/lib/backups\n  user:\n    passwd:\n      directory: {root}/etc\n  machine_id:\n    directory: {root}/etc/machine-id\n", s, count=1)
 open(p, "w").write(s)
 PY
 docker compose --profile wings up -d wings
+docker compose restart wings

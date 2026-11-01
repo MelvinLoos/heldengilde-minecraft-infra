@@ -93,3 +93,11 @@ The masterplan (`docs/design/masterplan.md`) and implementation bundle #1 (`docs
 
 ---
 
+## H. Findings from the Phase 1 spike (2026-11-01)
+
+See [ADR 0002](0002-runtime-itzg-under-wings-mounts.md) for the full list. Short version:
+
+- itzg's `/config` sync defaults to `/data/config` and lets newer files in `/data` win. Both defaults break the Git-owned zone and need overriding (`COPY_CONFIG_DEST`, `SYNC_SKIP_NEWER_IN_DESTINATION`).
+- Pelican panel `v1.0.0-beta38`: `POST /api/application/mounts` ignores all fields (upstream bug), so mounts are created with `artisan tinker`.
+- The original bundle's idea of replacing config on each start with a script was also unnecessary: itzg does this natively.
+
